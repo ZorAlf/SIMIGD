@@ -297,3 +297,54 @@ class OutgoingTransaction(models.Model):
         elif old_status == 'released' and self.status != 'released':
             self.item.current_stock += old_quantity
             self.item.save()
+
+class RequestItems(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Disetujui'),
+        ('rejected', 'Ditolak'),
+        ('completed', 'Selesai'),
+    ]
+
+    request_id = models.AutoField(primary_key=True)
+    request_number = models.CharField(max_length=50, unique=True, verbose_name='Nomor Permintaan')
+    item = models.ForeignKey(Items, on_delete=models.CASCADE, verbose_name='Barang')
+    quantity = models.IntegerField(verbose_name='Jumlah')
+    request_date = models.DateField(verbose_name='Tanggal Permintaan')
+    needed_date = models.DateField(verbose_name='Tanggal Dibutuhkan')
+    purpose = models.CharField(max_length=200, verbose_name='Keperluan')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='Status')
+    notes = models.TextField(blank=True, null=True, verbose_name='Catatan')
+    requested_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='requested_items', verbose_name='Diminta Oleh')
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_requests', verbose_name='Disetujui Oleh')
+    approved_date = models.DateTimeField(null=True, blank=True, verbose_name='Tanggal Disetujui')
+    rejection_reason = models.TextField(blank=True, null=True, verbose_name='Alasan Penolakan')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Request Item'
+        verbose_name_plural = 'Request Items'
+        ordering = ['-request_date', '-created_at']
+
+    def __str__(self):
+        return f"{self.request_number} - {self.item.name} ({self.quantity})"
+
+    def save(self, *args, **kwargs):
+        # Auto-generate request number if not exists
+        if not self.request_number:
+            from datetime import datetime
+            today = datetime.now().strftime('%Y%m%d')
+            last_request = RequestItems.objects.filter(
+                request_number__startswith=f'REQ{today}'
+            ).order_by('-request_number').first()
+            
+            if last_request:
+                last_number = int(last_request.request_number[-4:])
+                new_number = last_number + 1
+            else:
+                new_number = 1
+            
+            self.request_number = f'REQ{today}{str(new_number).zfill(4)}'
+        
+        super().save(*args, **kwargs)
