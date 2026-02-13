@@ -72,3 +72,81 @@ class Supplier(models.Model):
 
     def __str__(self):
         return f"{self.code} - {self.name}"
+    
+class Items(models.Model):
+    """Model untuk master barang"""
+    UNIT_CHOICES = [
+        ('pcs', 'Pcs (Pieces)'),
+        ('box', 'Box'),
+        ('kg', 'Kilogram'),
+        ('liter', 'Liter'),
+        ('meter', 'Meter'),
+        ('unit', 'Unit'),
+    ]
+
+    items_id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=100, unique=True, verbose_name='Kode Barang')
+    name = models.CharField(max_length=200, verbose_name='Nama Barang')
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Kategori')
+    unit = models.CharField(max_length=20, choices=UNIT_CHOICES, default='pcs', verbose_name='Satuan')
+    minimum_stock = models.IntegerField(default=0, verbose_name='Stok Minimum')
+    current_stock = models.IntegerField(default=0, verbose_name='Stok Saat Ini')
+    description = models.TextField(blank=True, null=True, verbose_name='Deskripsi')
+    is_active = models.BooleanField(default=True, verbose_name='Status Aktif')
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_items', verbose_name='Dibuat Oleh')
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='updated_items', verbose_name='Diupdate Oleh')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Item'
+        verbose_name_plural = 'Items'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+
+    @property
+    def stock_status(self):
+        """Return stock status"""
+        if self.current_stock <= 0:
+            return 'out_of_stock'
+        elif self.current_stock <= self.minimum_stock:
+            return 'low_stock'
+        return 'in_stock'
+    
+    @property
+    def stock_status_display(self):
+        """Return human-readable stock status"""
+        status_map = {
+            'in_stock': 'In Stock',
+            'low_stock': 'Low Stock',
+            'out_of_stock': 'Out of Stock'
+        }
+        return status_map.get(self.stock_status, 'Unknown')
+    
+    @property
+    def stock_status_badge(self):
+        """Return Bootstrap badge class for stock status"""
+        badge_map = {
+            'in_stock': 'bg-success',
+            'low_stock': 'bg-warning text-dark',
+            'out_of_stock': 'bg-danger'
+        }
+        return badge_map.get(self.stock_status, 'bg-secondary')
+    
+    @property
+    def stock_status_icon(self):
+        """Return Bootstrap icon for stock status"""
+        icon_map = {
+            'in_stock': 'bi-check-circle-fill',
+            'low_stock': 'bi-exclamation-triangle-fill',
+            'out_of_stock': 'bi-x-circle-fill'
+        }
+        return icon_map.get(self.stock_status, 'bi-question-circle')
+    
+    def get_stock_percentage(self):
+        """Return stock percentage relative to minimum stock"""
+        if self.minimum_stock == 0:
+            return 100 if self.current_stock > 0 else 0
+        return (self.current_stock / self.minimum_stock) * 100
