@@ -193,3 +193,139 @@ class ResetPasswordForm(forms.Form):
                 raise forms.ValidationError('Password dan konfirmasi password tidak sama.')
 
         return cleaned_data
+    
+class CategoryForm(forms.ModelForm):
+    """Form untuk kategori barang"""
+    
+    class Meta:
+        model = Category
+        fields = ['name', 'description']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nama Kategori'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Deskripsi kategori (opsional)'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            Field('name', css_class='mb-3'),
+            Field('description', css_class='mb-3'),
+            FormActions(
+                Submit('submit', 'Simpan', css_class='btn btn-primary'),
+                HTML('<a href="{% url \'category_list\' %}" class="btn btn-secondary">Batal</a>'),
+            )
+        )
+
+class SupplierForm(forms.ModelForm):
+    """Form untuk data supplier"""
+    class Meta:
+        model = Supplier
+        fields = ['code', 'name', 'contact_person', 'phone', 'email', 'address', 'is_active']
+        widgets = {
+            'code': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nama Supplier'}),
+            'contact_person': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nama Contact Person'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '08123456789'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'email@supplier.com'}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Alamat lengkap supplier'}),
+        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['code'].required = False
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            Row(
+                Column(Field('code', css_class='mb-3'), css_class='col-md-6'),
+                Column(Field('name', css_class='mb-3'), css_class='col-md-6'),
+            ),
+            Row(
+                Column(Field('contact_person', css_class='mb-3'), css_class='col-md-6'),
+                Column(Field('phone', css_class='mb-3'), css_class='col-md-6'),
+            ),
+            Field('email', css_class='mb-3'),
+            Field('address', css_class='mb-3'),
+            Field('is_active', css_class='form-check-input mb-3'),
+            FormActions(
+                Submit('submit', 'Simpan', css_class='btn btn-primary'),
+                HTML('<a href="/suppliers/" class="btn btn-secondary">Batal</a>'),
+            )
+        )
+    def clean(self):
+        cleaned_data = super().clean()
+        name = cleaned_data.get('name')
+        if name and not self.instance.pk:
+            from .models import Supplier
+            import re
+            # Generate code: ambil 3 huruf pertama tiap kata, uppercase, join pakai '-', tambah angka jika sudah ada
+            words = re.findall(r'\w+', name)
+            base_code = '-'.join([w[:3].upper() for w in words if w])
+            code = base_code
+            counter = 1
+            while Supplier.objects.filter(code=code).exists():
+                code = f"{base_code}-{counter}"
+                counter += 1
+            cleaned_data['code'] = code
+            self.data = self.data.copy()
+            self.data['code'] = code
+        return cleaned_data
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            Row(
+                Column(Field('code', css_class='mb-3'), css_class='col-md-6'),
+                Column(Field('name', css_class='mb-3'), css_class='col-md-6'),
+            ),
+            Row(
+                Column(Field('contact_person', css_class='mb-3'), css_class='col-md-6'),
+                Column(Field('phone', css_class='mb-3'), css_class='col-md-6'),
+            ),
+            Field('email', css_class='mb-3'),
+            Field('address', css_class='mb-3'),
+            Field('is_active', css_class='form-check-input mb-3'),
+            FormActions(
+                Submit('submit', 'Simpan', css_class='btn btn-primary'),
+                HTML('<a href="{% url \'supplier_list\' %}" class="btn btn-secondary">Batal</a>'),
+            )
+        )
+
+class ItemForm(forms.ModelForm):
+    """Form untuk master barang"""
+    class Meta:
+        model = Items
+        fields = ['code', 'name', 'category', 'unit', 'minimum_stock', 'description', 'is_active']
+        widgets = {
+            'code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'BRG001'}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nama Barang'}),
+            'category': forms.Select(attrs={'class': 'form-control'}),
+            'unit': forms.Select(attrs={'class': 'form-control'}),
+            'minimum_stock': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '10', 'min': '0'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Deskripsi barang (opsional)'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            Row(
+                Column(Field('code', css_class='mb-3'), css_class='col-md-6'),
+                Column(Field('name', css_class='mb-3'), css_class='col-md-6'),
+            ),
+            Row(
+                Column(Field('category', css_class='mb-3'), css_class='col-md-4'),
+                Column(Field('unit', css_class='mb-3'), css_class='col-md-4'),
+                Column(Field('minimum_stock', css_class='mb-3'), css_class='col-md-4'),
+            ),
+            Field('description', css_class='mb-3'),
+            Field('is_active', css_class='form-check-input mb-3'),
+            FormActions(
+                Submit('submit', 'Simpan', css_class='btn btn-primary'),
+                HTML('<a href="{% url \'item_list\' %}" class="btn btn-secondary">Batal</a>'),
+            )
+        )
