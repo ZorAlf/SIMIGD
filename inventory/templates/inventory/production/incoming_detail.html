@@ -1,0 +1,248 @@
+ {% extends 'inventory/base.html' %}
+
+{% block title %}Detail Transaksi Barang Masuk - SIMIGD{% endblock %}
+
+{% block page_title %}Detail Transaksi Barang Masuk{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Transaction Information -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-arrow-down-circle me-2"></i>Informasi Transaksi
+                </h5>
+                <div class="d-flex gap-2">
+                    {% if transaction.status == 'pending' %}
+                    <a href="{% url 'incoming_update' transaction.incoming_id %}" class="btn btn-warning btn-sm">
+                        <i class="bi bi-pencil me-1"></i>Edit
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong><i class="bi bi-hash me-2"></i>No. Transaksi:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        <span class="badge bg-secondary fs-6">{{ transaction.transaction_number }}</span>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong><i class="bi bi-calendar3 me-2"></i>Tanggal Transaksi:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        {{ transaction.transaction_date|date:"d F Y" }}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong><i class="bi bi-box-seam me-2"></i>Barang:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        <a href="{% url 'item_detail' transaction.item.items_id %}" class="text-decoration-none">
+                            <strong>{{ transaction.item.name }}</strong>
+                        </a>
+                        <br>
+                        <small class="text-muted">Kode: {{ transaction.item.code }}</small>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong><i class="bi bi-cart-plus me-2"></i>Supplier:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        {% if transaction.supplier %}
+                        <a href="{% url 'supplier_detail' transaction.supplier.supplier_id %}" class="text-decoration-none">
+                            {{ transaction.supplier.name }}
+                        </a>
+                        <br>
+                        <small class="text-muted">{{ transaction.supplier.code }}</small>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong><i class="bi bi-123 me-2"></i>Jumlah:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        <h4 class="mb-0">
+                            <span class="badge bg-success">
+                                {{ transaction.quantity }} {{ transaction.item.get_unit_display }}
+                            </span>
+                        </h4>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong><i class="bi bi-card-text me-2"></i>Nomor Referensi:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        {{ transaction.reference_number|default:"-" }}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong><i class="bi bi-sticky me-2"></i>Catatan:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        {{ transaction.notes|default:"-"|linebreaksbr }}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong><i class="bi bi-circle-fill me-2"></i>Status:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        {% if transaction.status == 'pending' %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        {% elif transaction.status == 'received' %}
+                            <span class="badge bg-success">Diterima</span>
+                        {% elif transaction.status == 'cancelled' %}
+                            <span class="badge bg-danger">Dibatalkan</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong><i class="bi bi-person-check me-2"></i>Diterima Oleh:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        {{ transaction.received_by.name|default:"-" }}
+                        {% if transaction.received_by %}
+                        <br>
+                        <small class="text-muted">{{ transaction.received_by.username }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong><i class="bi bi-calendar-plus me-2"></i>Dibuat:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        {{ transaction.created_at|date:"d M Y H:i" }}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong><i class="bi bi-calendar-check me-2"></i>Terakhir Diubah:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        {{ transaction.updated_at|date:"d M Y H:i" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Item Stock Info -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-boxes me-2"></i>Info Stok Barang
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted d-block">Stok Saat Ini</small>
+                    <h3 class="mb-0">{{ transaction.item.current_stock }} {{ transaction.item.get_unit_display }}</h3>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block">Stok Minimum</small>
+                    <h5 class="mb-0">{{ transaction.item.minimum_stock }} {{ transaction.item.get_unit_display }}</h5>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block">Status Stok</small>
+                    {% if transaction.item.current_stock <= transaction.item.minimum_stock %}
+                        <span class="badge bg-danger">Stok Menipis</span>
+                    {% else %}
+                        <span class="badge bg-success">Stok Aman</span>
+                    {% endif %}
+                </div>
+                
+                {% if transaction.status == 'received' %}
+                <div class="alert alert-success mb-0" role="alert">
+                    <small>
+                        <i class="bi bi-info-circle me-1"></i>
+                        Stok telah ditambah sebesar {{ transaction.quantity }} {{ transaction.item.get_unit_display }}
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Transaction Impact -->
+        {% if transaction.status == 'received' %}
+        <div class="card mb-4">
+            <div class="card-header bg-warning">
+                <h6 class="mb-0">
+                    <i class="bi bi-graph-up me-2"></i>Dampak Transaksi
+                </h6>
+            </div>
+            <div class="card-body">
+                {% widthratio transaction.quantity 1 -1 as neg_quantity %}
+                <div class="mb-3">
+                    <small class="text-muted d-block">Stok Sebelum</small>
+                    <h5 class="mb-0">{{ transaction.item.current_stock|add:neg_quantity }} {{ transaction.item.get_unit_display }}</h5>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block">Jumlah Ditambahkan</small>
+                    <h5 class="mb-0 text-success">+{{ transaction.quantity }} {{ transaction.item.get_unit_display }}</h5>
+                </div>
+                <div>
+                    <small class="text-muted d-block">Stok Sesudah</small>
+                    <h5 class="mb-0">{{ transaction.item.current_stock }} {{ transaction.item.get_unit_display }}</h5>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-header bg-warning">
+                <h6 class="mb-0">
+                    <i class="bi bi-lightning-charge me-2"></i>Aksi Cepat
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if transaction.status == 'pending' %}
+                    <a href="{% url 'incoming_update' transaction.incoming_id %}" class="btn btn-warning">
+                        <i class="bi bi-pencil me-1"></i>Edit Transaksi
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'item_detail' transaction.item.items_id %}" class="btn btn-info">
+                        <i class="bi bi-box-seam me-1"></i>Lihat Detail Barang
+                    </a>
+                    <a href="{% url 'incoming_list' %}" class="btn btn-secondary">
+                        <i class="bi bi-list me-1"></i>Lihat Semua Transaksi
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{% url 'incoming_list' %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Kembali ke Daftar
+    </a>
+</div>
+{% endblock %}

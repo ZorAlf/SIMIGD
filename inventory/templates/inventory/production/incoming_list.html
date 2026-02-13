@@ -1,0 +1,143 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Daftar Barang Masuk - SIMIGD{% endblock %}
+
+{% block page_title %}Barang Masuk{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-arrow-down-circle me-2"></i>Daftar Transaksi Barang Masuk</h5>
+        <a href="{% url 'incoming_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Tambah Barang Masuk
+        </a>
+    </div>
+    <div class="card-body">
+        <!-- Search and Filter Form -->
+        <form method="get" class="row g-3 mb-3">
+            <div class="col-md-4">
+                <input type="text" class="form-control" name="search" placeholder="Cari nomor transaksi, barang, supplier..." value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select">
+                    <option value="">Semua Status</option>
+                    <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="received" {% if request.GET.status == 'received' %}selected{% endif %}>Diterima</option>
+                    <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Dibatalkan</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="date" class="form-control" name="date_from" placeholder="Dari Tanggal" value="{{ request.GET.date_from }}">
+            </div>
+            <div class="col-md-2">
+                <input type="date" class="form-control" name="date_to" placeholder="Sampai Tanggal" value="{{ request.GET.date_to }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-secondary w-100">
+                    <i class="bi bi-search me-1"></i>Filter
+                </button>
+            </div>
+        </form>
+
+        <!-- Transactions Table -->
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>No. Transaksi</th>
+                        <th>Tanggal</th>
+                        <th>Barang</th>
+                        <th>Supplier</th>
+                        <th>Jumlah</th>
+                        <th>Status</th>
+                        <th>Diterima Oleh</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in transactions %}
+                    <tr>
+                        <td><strong>{{ transaction.transaction_number }}</strong></td>
+                        <td>{{ transaction.transaction_date|date:"d/m/Y" }}</td>
+                        <td>{{ transaction.item.name }}</td>
+                        <td>{{ transaction.supplier }}</td>
+                        <td>{{ transaction.quantity }} {{ transaction.item.get_unit_display }}</td>
+                        <td>
+                            {% if transaction.status == 'pending' %}
+                                <span class="badge bg-warning">Pending</span>
+                            {% elif transaction.status == 'received' %}
+                                <span class="badge bg-success">Diterima</span>
+                            {% elif transaction.status == 'cancelled' %}
+                                <span class="badge bg-danger">Dibatalkan</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ transaction.received_by.name|default:"-" }}</td>
+                        <td>
+                            <div class="action-buttons d-flex gap-2">
+                                <a href="{% url 'incoming_detail' transaction.incoming_id %}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Detail">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if transaction.status == 'pending' %}
+                                <a href="{% url 'incoming_update' transaction.incoming_id %}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">Tidak ada data transaksi barang masuk.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">First</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">Previous</a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">Next</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">Last</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .action-buttons {
+        white-space: nowrap;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+{% endblock %}
