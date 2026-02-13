@@ -1,0 +1,61 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Hapus Kategori - SIMIGD{% endblock %}
+
+{% block page_title %}Konfirmasi Hapus Kategori{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Konfirmasi Penghapusan
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>Perhatian!</strong> Tindakan ini tidak dapat dibatalkan.
+                </div>
+                
+                <p class="mb-3">Apakah Anda yakin ingin menghapus kategori berikut?</p>
+                
+                <div class="card bg-light mb-4">
+                    <div class="card-body">
+                        <h6 class="mb-2">Detail Kategori:</h6>
+                        <table class="table table-sm table-borderless mb-0">
+                            <tr>
+                                <td width="40%"><strong>Nama Kategori:</strong></td>
+                                <td>{{ object.name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Deskripsi:</strong></td>
+                                <td>{{ object.description|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Dibuat:</strong></td>
+                                <td>{{ object.created_at|date:"d M Y H:i" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="{% url 'category_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle me-1"></i>Batal
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-1"></i>Ya, Hapus Kategori
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
