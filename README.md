@@ -6,6 +6,8 @@
 
 Sistem Informasi Manajemen Inventaris Gudang (SIMIGD) adalah aplikasi web berbasis Django untuk mengelola inventaris gudang PT Delima Jaya. Aplikasi ini menyediakan fitur lengkap untuk manajemen stok barang, transaksi masuk/keluar, permintaan barang produksi, serta pelaporan untuk manajemen.
 
+Projek Praktik Lapang
+
 ---
 
 ## ✨ Fitur Utama
@@ -341,30 +343,9 @@ Kontribusi selalu diterima! Untuk berkontribusi:
 
 ---
 
-## 📜 License
-
-Project ini menggunakan MIT License. Silakan lihat file `LICENSE` untuk detail lengkap.
-
----
-
 ## 👨‍💻 Author
 
-**PT Delima Jaya - IT Development Team**
-
----
-
-## 📞 Support
-
-Jika mengalami masalah atau memiliki pertanyaan:
-- 📧 Email: support@delimajaya.com
-- 📱 Phone: +62 xxx xxxx xxxx
-- 🌐 Website: www.delimajaya.com
-
----
-
-## 🎉 Terima Kasih!
-
-Terima kasih telah menggunakan SIMIGD - Sistem Informasi Manajemen Inventaris Gudang Delima Jaya!
+Alfandi Ahmad
 
 ---
 
