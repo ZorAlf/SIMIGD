@@ -1,0 +1,170 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Daftar Barang Master - SIMIGD{% endblock %}
+
+{% block page_title %}Barang Master{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Daftar Barang Master</h5>
+        <a href="{% url 'item_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Tambah Barang
+        </a>
+    </div>
+    <div class="card-body">
+        <!-- Search and Filter Form -->
+        <form method="get" class="row g-3 mb-3">
+            <div class="col-md-4">
+                <input type="text" class="form-control" name="search" placeholder="Cari kode atau nama barang..." value="{{ search }}">
+            </div>
+            <div class="col-md-3">
+                <select name="category" class="form-select">
+                    <option value="">Semua Kategori</option>
+                    {% for category in categories %}
+                        <option value="{{ category.category_id }}" {% if category_filter == category.category_id|stringformat:"s" %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="stock_status" class="form-select">
+                    <option value="">Semua Status Stok</option>
+                    <option value="low" {% if stock_status == 'low' %}selected{% endif %}>Stok Menipis</option>
+                    <option value="out" {% if stock_status == 'out' %}selected{% endif %}>Stok Habis</option>
+                    <option value="in" {% if stock_status == 'in' %}selected{% endif %}>Stok Aman</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-secondary w-100">
+                    <i class="bi bi-search me-1"></i>Filter
+                </button>
+            </div>
+        </form>
+
+        <!-- Items Table -->
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Kode</th>
+                        <th>Nama Barang</th>
+                        <th>Kategori</th>
+                        <th>Stok Saat Ini</th>
+                        <th>Stok Minimum</th>
+                        <th>Satuan</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td><strong>{{ item.code }}</strong></td>
+                        <td>{{ item.name }}</td>
+                        <td>
+                            {% if item.category %}
+                                <span class="badge bg-info">{{ item.category.name }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Tidak ada</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.stock_status == 'out_of_stock' %}
+                                <span class="badge bg-danger">{{ item.current_stock }}</span>
+                            {% elif item.stock_status == 'low_stock' %}
+                                <span class="badge bg-warning">{{ item.current_stock }}</span>
+                            {% else %}
+                                <span class="badge bg-success">{{ item.current_stock }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.minimum_stock }}</td>
+                        <td>{{ item.get_unit_display }}</td>
+                        <td>
+                            {% if item.is_active %}
+                                <span class="badge bg-success">Aktif</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Nonaktif</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-buttons d-flex gap-2">
+                                <a href="{% url 'item_detail' item.items_id %}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Detail">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'item_update' item.items_id %}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'item_delete' item.items_id %}" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" title="Hapus">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">Tidak ada data barang.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if stock_status %}&stock_status={{ stock_status }}{% endif %}">
+                            First
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if stock_status %}&stock_status={{ stock_status }}{% endif %}">
+                            Previous
+                        </a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if stock_status %}&stock_status={{ stock_status }}{% endif %}">
+                            Next
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if stock_status %}&stock_status={{ stock_status }}{% endif %}">
+                            Last
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .action-buttons {
+        white-space: nowrap;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+{% endblock %}
