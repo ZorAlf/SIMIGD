@@ -39,3 +39,18 @@ class User(models.Model):
     
     def set_password(self, raw_password):
         self.password = make_password(raw_password)
+
+class Category(models.Model):
+    category_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=100, unique=True, verbose_name='Nama Kategori')
+    description = models.TextField(blank=True, null=True, verbose_name='Deskripsi')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Category'
+        verbose_name_plural = 'Categories'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
