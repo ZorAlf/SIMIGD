@@ -220,3 +220,80 @@ class IncomingTransaction(models.Model):
         elif old_status == 'received' and self.status != 'received':
             self.item.current_stock -= old_quantity
             self.item.save()
+
+class OutgoingTransaction(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('released', 'Dikeluarkan'),
+        ('cancelled', 'Dibatalkan'),
+    ]
+
+    outgoing_id = models.AutoField(primary_key=True)
+    transaction_number = models.CharField(max_length=50, unique=True, verbose_name='Nomor Transaksi')
+    request_item = models.OneToOneField(
+        'RequestItems', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='outgoing_transaction',
+        verbose_name='Permintaan Terkait'
+    )
+    item = models.ForeignKey(Items, on_delete=models.CASCADE, verbose_name='Barang')
+    quantity = models.IntegerField(verbose_name='Jumlah')
+    transaction_date = models.DateField(verbose_name='Tanggal Transaksi')
+    purpose = models.CharField(max_length=200, verbose_name='Tujuan/Keperluan')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='released', verbose_name='Status')
+    notes = models.TextField(blank=True, null=True, verbose_name='Catatan')
+    released_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='outgoing_transactions', verbose_name='Dikeluarkan Oleh')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Outgoing Transaction'
+        verbose_name_plural = 'Outgoing Transactions'
+        ordering = ['-transaction_date', '-created_at']
+
+    def __str__(self):
+        return f"{self.transaction_number} - {self.item.name} ({self.quantity})"
+
+    def save(self, *args, **kwargs):
+        if not self.transaction_number:
+            from datetime import datetime
+            today = datetime.now().strftime('%Y%m%d')
+            last_transaction = OutgoingTransaction.objects.filter(
+                transaction_number__startswith=f'OUT{today}'
+            ).order_by('-transaction_number').first()
+            
+            if last_transaction:
+                last_number = int(last_transaction.transaction_number[-4:])
+                new_number = last_number + 1
+            else:
+                new_number = 1
+            
+            self.transaction_number = f'OUT{today}{str(new_number).zfill(4)}'
+        
+        is_new = self.pk is None
+        old_status = None
+        old_quantity = 0
+        
+        if not is_new:
+            old_transaction = OutgoingTransaction.objects.get(pk=self.pk)
+            old_status = old_transaction.status
+            old_quantity = old_transaction.quantity
+        
+        super().save(*args, **kwargs)
+        
+        if self.status == 'released':
+            if is_new:
+                self.item.current_stock -= self.quantity
+                self.item.save()
+            elif old_status != 'released':
+                self.item.current_stock -= self.quantity
+                self.item.save()
+            elif old_quantity != self.quantity:
+                stock_difference = old_quantity - self.quantity
+                self.item.current_stock += stock_difference
+                self.item.save()
+        elif old_status == 'released' and self.status != 'released':
+            self.item.current_stock += old_quantity
+            self.item.save()
