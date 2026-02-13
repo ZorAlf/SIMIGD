@@ -14,7 +14,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 class RequestItemListView(ProduksiOrGudangMixin, ListView):
     """List all request items - accessible by produksi and gudang (both see all requests)"""
     model = RequestItems
-    template_name = 'inventory/produksi/permintaan_list.html'
+    template_name = 'inventory/production/request_list.html'
     context_object_name = 'requests'
     paginate_by = 15
     
@@ -70,7 +70,7 @@ class RequestItemCreateView(ProduksiRequiredMixin, CreateView):
     """Create new request item - only accessible by produksi"""
     model = RequestItems
     form_class = RequestItemForm
-    template_name = 'inventory/produksi/permintaan_form.html'
+    template_name = 'inventory/production/request_form.html'
     success_url = reverse_lazy('request_list')
     
     def get_context_data(self, **kwargs):
@@ -108,7 +108,7 @@ class RequestItemCreateView(ProduksiRequiredMixin, CreateView):
 class RequestItemDetailView(ProduksiOrGudangMixin, DetailView):
     """View request item details - accessible by produksi and gudang"""
     model = RequestItems
-    template_name = 'inventory/produksi/permintaan_detail.html'
+    template_name = 'inventory/production/request_detail.html'
     context_object_name = 'request'
     pk_url_kwarg = 'request_id'
     
@@ -137,7 +137,7 @@ class RequestItemApproveView(GudangRequiredMixin, UpdateView):
     """Approve or reject request item (Admin/Gudang only)"""
     model = RequestItems
     form_class = ApproveRequestForm
-    template_name = 'inventory/produksi/permintaan_approve.html'
+    template_name = 'inventory/production/request_approve.html'
     pk_url_kwarg = 'request_id'
     success_url = reverse_lazy('request_list')
     

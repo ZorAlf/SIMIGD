@@ -164,7 +164,7 @@ class DashboardView(View):
             print(f"  chart_outgoing: {context['chart_outgoing']}")
             print(f"  Stock counts in context: In={context['in_stock_count']}, Low={context['low_stock_count']}, Out={context['out_of_stock_count']}")
             
-            return render(request, 'inventory/direktur/dashboard_direktur.html', context)
+            return render(request, 'inventory/director/dashboard.html', context)
             
         except User.DoesNotExist:
             messages.error(request, 'User tidak ditemukan.')
@@ -174,7 +174,7 @@ class DashboardView(View):
 class UserListView(AdminRequiredMixin, ListView):
     """Display list of all users"""
     model = User
-    template_name = 'inventory/user_list.html'
+    template_name = 'inventory/admin/user_list.html'
     context_object_name = 'users'
     paginate_by = 10
     
@@ -216,7 +216,7 @@ class UserCreateView(AdminRequiredMixin, CreateView):
     """Create new user"""
     model = User
     form_class = UserForm
-    template_name = 'inventory/user_form.html'
+    template_name = 'inventory/admin/user_form.html'
     success_url = reverse_lazy('user_list')
     
     def form_valid(self, form):
@@ -233,7 +233,7 @@ class UserUpdateView(AdminRequiredMixin, UpdateView):
     """Update existing user"""
     model = User
     form_class = UserUpdateForm
-    template_name = 'inventory/user_form.html'
+    template_name = 'inventory/admin/user_form.html'
     success_url = reverse_lazy('user_list')
     pk_url_kwarg = 'user_id'
     
@@ -250,7 +250,7 @@ class UserUpdateView(AdminRequiredMixin, UpdateView):
 class UserDeleteView(AdminRequiredMixin, DeleteView):
     """Delete user (soft delete by setting is_active to False)"""
     model = User
-    template_name = 'inventory/user_confirm_delete.html'
+    template_name = 'inventory/admin/user_confirm_delete.html'
     success_url = reverse_lazy('user_list')
     pk_url_kwarg = 'user_id'
     
@@ -274,7 +274,7 @@ class UserDeleteView(AdminRequiredMixin, DeleteView):
 # Reset Password View
 class UserResetPasswordView(AdminRequiredMixin, View):
     """Reset user password"""
-    template_name = 'inventory/user_reset_password.html'
+    template_name = 'inventory/admin/user_reset_password.html'
     
     def get(self, request, user_id):
         user = get_object_or_404(User, user_id=user_id)
@@ -311,7 +311,7 @@ class UserResetPasswordView(AdminRequiredMixin, View):
 # User Detail View
 class UserDetailView(AdminRequiredMixin, View):
     """View user details"""
-    template_name = 'inventory/user_detail.html'
+    template_name = 'inventory/admin/user_detail.html'
     
     def get(self, request, user_id):
         user = get_object_or_404(User, user_id=user_id)

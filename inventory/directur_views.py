@@ -33,7 +33,7 @@ class LaporanListView(DirekturRequiredMixin, TemplateView):
     - Laporan Barang Keluar
     - Laporan Permintaan Barang
     """
-    template_name = 'inventory/direktur/laporan_list.html'
+    template_name = 'inventory/director/report_list.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -519,7 +519,7 @@ class HistoriAktivitasView(DirekturRequiredMixin, ListView):
     - OutgoingTransaction
     - RequestItems
     """
-    template_name = 'inventory/direktur/histori_aktivitas.html'
+    template_name = 'inventory/director/activity_history.html'
     context_object_name = 'activities'
     paginate_by = 20
     

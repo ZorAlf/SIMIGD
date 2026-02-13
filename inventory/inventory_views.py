@@ -29,7 +29,7 @@ from .mixins import GudangRequiredMixin
 class CategoryListView(GudangRequiredMixin, ListView):
     """List all categories"""
     model = Category
-    template_name = 'inventory/category_list.html'
+    template_name = 'inventory/warehouse/category_list.html'
     context_object_name = 'categories'
     paginate_by = 10
     
@@ -46,7 +46,7 @@ class CategoryCreateView(GudangRequiredMixin, CreateView):
     """Create new category"""
     model = Category
     form_class = CategoryForm
-    template_name = 'inventory/category_form.html'
+    template_name = 'inventory/warehouse/category_form.html'
     success_url = reverse_lazy('category_list')
     
     def form_valid(self, form):
@@ -57,7 +57,7 @@ class CategoryUpdateView(GudangRequiredMixin, UpdateView):
     """Update existing category"""
     model = Category
     form_class = CategoryForm
-    template_name = 'inventory/category_form.html'
+    template_name = 'inventory/warehouse/category_form.html'
     success_url = reverse_lazy('category_list')
     pk_url_kwarg = 'category_id'
     
@@ -68,7 +68,7 @@ class CategoryUpdateView(GudangRequiredMixin, UpdateView):
 class CategoryDeleteView(GudangRequiredMixin, DeleteView):
     """Delete category"""
     model = Category
-    template_name = 'inventory/category_confirm_delete.html'
+    template_name = 'inventory/warehouse/category_confirm_delete.html'
     success_url = reverse_lazy('category_list')
     pk_url_kwarg = 'category_id'
     
@@ -80,7 +80,7 @@ class CategoryDeleteView(GudangRequiredMixin, DeleteView):
 class SupplierListView(GudangRequiredMixin, ListView):
     """List all suppliers"""
     model = Supplier
-    template_name = 'inventory/supplier_list.html'
+    template_name = 'inventory/warehouse/supplier_list.html'
     context_object_name = 'suppliers'
     paginate_by = 10
     
@@ -108,7 +108,7 @@ class SupplierCreateView(GudangRequiredMixin, CreateView):
     """Create new supplier"""
     model = Supplier
     form_class = SupplierForm
-    template_name = 'inventory/supplier_form.html'
+    template_name = 'inventory/warehouse/supplier_form.html'
     success_url = reverse_lazy('supplier_list')
     
     def form_valid(self, form):
@@ -123,7 +123,7 @@ class SupplierUpdateView(GudangRequiredMixin, UpdateView):
     """Update existing supplier"""
     model = Supplier
     form_class = SupplierForm
-    template_name = 'inventory/supplier_form.html'
+    template_name = 'inventory/warehouse/supplier_form.html'
     success_url = reverse_lazy('supplier_list')
     pk_url_kwarg = 'supplier_id'
     
@@ -134,7 +134,7 @@ class SupplierUpdateView(GudangRequiredMixin, UpdateView):
 class SupplierDetailView(GudangRequiredMixin, DetailView):
     """View supplier details"""
     model = Supplier
-    template_name = 'inventory/supplier_detail.html'
+    template_name = 'inventory/warehouse/supplier_detail.html'
     context_object_name = 'supplier'
     pk_url_kwarg = 'supplier_id'
     
@@ -166,7 +166,7 @@ class SupplierDetailView(GudangRequiredMixin, DetailView):
 class SupplierDeleteView(GudangRequiredMixin, DeleteView):
     """Delete supplier"""
     model = Supplier
-    template_name = 'inventory/supplier_confirm_delete.html'
+    template_name = 'inventory/warehouse/supplier_confirm_delete.html'
     success_url = reverse_lazy('supplier_list')
     pk_url_kwarg = 'supplier_id'
     
@@ -178,7 +178,7 @@ class SupplierDeleteView(GudangRequiredMixin, DeleteView):
 class ItemListView(GudangRequiredMixin, ListView):
     """List all items"""
     model = Items
-    template_name = 'inventory/item_list.html'
+    template_name = 'inventory/warehouse/item_list.html'
     context_object_name = 'items'
     paginate_by = 10
     
@@ -219,7 +219,7 @@ class ItemCreateView(GudangRequiredMixin, CreateView):
     """Create new item"""
     model = Items
     form_class = ItemForm
-    template_name = 'inventory/item_form.html'
+    template_name = 'inventory/warehouse/item_form.html'
     success_url = reverse_lazy('item_list')
     
     def form_valid(self, form):
@@ -236,7 +236,7 @@ class ItemUpdateView(GudangRequiredMixin, UpdateView):
     """Update existing item"""
     model = Items
     form_class = ItemForm
-    template_name = 'inventory/item_form.html'
+    template_name = 'inventory/warehouse/item_form.html'
     success_url = reverse_lazy('item_list')
     pk_url_kwarg = 'item_id'
     
@@ -252,7 +252,7 @@ class ItemUpdateView(GudangRequiredMixin, UpdateView):
 class ItemDetailView(GudangRequiredMixin, DetailView):
     """View item details"""
     model = Items
-    template_name = 'inventory/item_detail.html'
+    template_name = 'inventory/warehouse/item_detail.html'
     context_object_name = 'item'
     pk_url_kwarg = 'item_id'
     
@@ -275,7 +275,7 @@ class ItemDetailView(GudangRequiredMixin, DetailView):
 class ItemDeleteView(GudangRequiredMixin, DeleteView):
     """Delete item"""
     model = Items
-    template_name = 'inventory/item_confirm_delete.html'
+    template_name = 'inventory/warehouse/item_confirm_delete.html'
     success_url = reverse_lazy('item_list')
     pk_url_kwarg = 'item_id'
     
@@ -287,7 +287,7 @@ class ItemDeleteView(GudangRequiredMixin, DeleteView):
 class IncomingListView(GudangRequiredMixin, ListView):
     """List all incoming transactions"""
     model = IncomingTransaction
-    template_name = 'inventory/incoming_list.html'
+    template_name = 'inventory/warehouse/incoming_list.html'
     context_object_name = 'transactions'
     paginate_by = 15
     
@@ -320,7 +320,7 @@ class IncomingCreateView(GudangRequiredMixin, CreateView):
     """Create new incoming transaction"""
     model = IncomingTransaction
     form_class = IncomingTransactionForm
-    template_name = 'inventory/incoming_form.html'
+    template_name = 'inventory/warehouse/incoming_form.html'
     success_url = reverse_lazy('incoming_list')
     
     def form_valid(self, form):
@@ -338,7 +338,7 @@ class IncomingCreateView(GudangRequiredMixin, CreateView):
 class IncomingDetailView(GudangRequiredMixin, DetailView):
     """View incoming transaction details"""
     model = IncomingTransaction
-    template_name = 'inventory/incoming_detail.html'
+    template_name = 'inventory/warehouse/incoming_detail.html'
     context_object_name = 'transaction'
     pk_url_kwarg = 'incoming_id'
 
@@ -346,7 +346,7 @@ class IncomingUpdateView(GudangRequiredMixin, UpdateView):
     """Update existing incoming transaction"""
     model = IncomingTransaction
     form_class = IncomingTransactionForm
-    template_name = 'inventory/incoming_form.html'
+    template_name = 'inventory/warehouse/incoming_form.html'
     success_url = reverse_lazy('incoming_list')
     pk_url_kwarg = 'incoming_id'
     
@@ -359,7 +359,7 @@ class IncomingUpdateView(GudangRequiredMixin, UpdateView):
 class OutgoingListView(GudangRequiredMixin, ListView):
     """List all outgoing transactions"""
     model = OutgoingTransaction
-    template_name = 'inventory/outgoing_list.html'
+    template_name = 'inventory/warehouse/outgoing_list.html'
     context_object_name = 'transactions'
     paginate_by = 15
     
@@ -392,7 +392,7 @@ class OutgoingCreateView(GudangRequiredMixin, CreateView):
     """Create new outgoing transaction"""
     model = OutgoingTransaction
     form_class = OutgoingTransactionForm
-    template_name = 'inventory/outgoing_form.html'
+    template_name = 'inventory/warehouse/outgoing_form.html'
     success_url = reverse_lazy('outgoing_list')
     
     def form_valid(self, form):
@@ -410,7 +410,7 @@ class OutgoingCreateView(GudangRequiredMixin, CreateView):
 class OutgoingDetailView(GudangRequiredMixin, DetailView):
     """View outgoing transaction details"""
     model = OutgoingTransaction
-    template_name = 'inventory/outgoing_detail.html'
+    template_name = 'inventory/warehouse/outgoing_detail.html'
     context_object_name = 'transaction'
     pk_url_kwarg = 'outgoing_id'
 
@@ -418,7 +418,7 @@ class OutgoingUpdateView(GudangRequiredMixin, UpdateView):
     """Update existing outgoing transaction"""
     model = OutgoingTransaction
     form_class = OutgoingTransactionForm
-    template_name = 'inventory/outgoing_form.html'
+    template_name = 'inventory/warehouse/outgoing_form.html'
     success_url = reverse_lazy('outgoing_list')
     pk_url_kwarg = 'outgoing_id'
     
