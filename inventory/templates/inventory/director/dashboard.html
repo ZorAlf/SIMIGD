@@ -1,0 +1,499 @@
+{% extends 'inventory/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - SIMIGD{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h2>
+            <p class="text-muted mb-0">Ringkasan Sistem Informasi Manajemen Inventaris Gudang</p>
+        </div>
+        <div>
+            <small class="text-muted">
+                <i class="bi bi-calendar-event me-1"></i>{{ "now"|date:"d F Y, H:i" }}
+            </small>
+        </div>
+    </div>
+
+    <!-- Summary Cards Row 1 -->
+    <div class="row g-3 mb-4">
+        <!-- Total Barang -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Total Barang</p>
+                            <h3 class="mb-0">{{ total_items }}</h3>
+                            <small class="text-success">
+                                <i class="bi bi-box-seam"></i> Items Aktif
+                            </small>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-box-seam fs-2 text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- In Stock -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">✅ In Stock</p>
+                            <h3 class="mb-0">{{ in_stock_count }}</h3>
+                            <small class="text-success">
+                                <i class="bi bi-check-circle-fill"></i> Stok Aman
+                            </small>
+                        </div>
+                        <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-check-circle-fill fs-2 text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Low Stock -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">⚠️ Low Stock</p>
+                            <h3 class="mb-0">{{ low_stock_count }}</h3>
+                            <small class="text-warning">
+                                <i class="bi bi-exclamation-triangle-fill"></i> Stok Menipis
+                            </small>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-exclamation-triangle-fill fs-2 text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Out of Stock -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">❌ Out of Stock</p>
+                            <h3 class="mb-0">{{ out_of_stock_count }}</h3>
+                            <small class="text-danger">
+                                <i class="bi bi-x-circle-fill"></i> Stok Habis
+                            </small>
+                        </div>
+                        <div class="bg-danger bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-x-circle-fill fs-2 text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards Row 2 -->
+    <div class="row g-3 mb-4">
+        <!-- Total Stok -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Total Stok</p>
+                            <h3 class="mb-0">{{ total_stock|floatformat:0 }}</h3>
+                            <small class="text-info">
+                                <i class="bi bi-stack"></i> Unit
+                            </small>
+                        </div>
+                        <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-stack fs-2 text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barang Masuk (Bulan Ini) -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Barang Masuk</p>
+                            <h3 class="mb-0">{{ incoming_transactions }}</h3>
+                            <small class="text-success">
+                                <i class="bi bi-arrow-down-circle"></i> {{ incoming_quantity }} unit bulan ini
+                            </small>
+                        </div>
+                        <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-arrow-down-circle fs-2 text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Barang Keluar (Bulan Ini) -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Barang Keluar</p>
+                            <h3 class="mb-0">{{ outgoing_transactions }}</h3>
+                            <small class="text-danger">
+                                <i class="bi bi-arrow-up-circle"></i> {{ outgoing_quantity }} unit bulan ini
+                            </small>
+                        </div>
+                        <div class="bg-danger bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-arrow-up-circle fs-2 text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Permintaan Pending -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Permintaan Pending</p>
+                            <h3 class="mb-0">{{ pending_requests }}</h3>
+                            <small class="text-warning">
+                                <i class="bi bi-hourglass-split"></i> Menunggu Approval
+                            </small>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-hourglass-split fs-2 text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Permintaan Disetujui -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Permintaan Disetujui</p>
+                            <h3 class="mb-0">{{ approved_requests }}</h3>
+                            <small class="text-success">
+                                <i class="bi bi-check-circle"></i> Approved
+                            </small>
+                        </div>
+                        <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-check-circle fs-2 text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Permintaan -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Total Permintaan</p>
+                            <h3 class="mb-0">{{ total_requests }}</h3>
+                            <small class="text-secondary">
+                                <i class="bi bi-clipboard-check"></i> All Requests
+                            </small>
+                        </div>
+                        <div class="bg-secondary bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-clipboard-check fs-2 text-secondary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-3 mb-4">
+        <!-- Chart - Status Stok Distribution -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart-fill me-2"></i>Distribusi Status Stok</h5>
+                </div>
+                <div class="card-body text-center">
+                    <canvas id="stockStatusChart" style="max-height: 250px;"></canvas>
+                    <div class="mt-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                            <span><i class="bi bi-circle-fill text-success me-2"></i>In Stock</span>
+                            <strong class="badge bg-success">{{ in_stock_count }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                            <span><i class="bi bi-circle-fill text-warning me-2"></i>Low Stock</span>
+                            <strong class="badge bg-warning text-dark">{{ low_stock_count }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-circle-fill text-danger me-2"></i>Out of Stock</span>
+                            <strong class="badge bg-danger">{{ out_of_stock_count }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart - Transaksi 7 Hari Terakhir -->
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart-line me-2"></i>Grafik Transaksi (7 Hari Terakhir)</h5>
+                </div>
+                <div class="card-body" style="position: relative; height: 300px;">
+                    <canvas id="transactionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+<!-- Hidden data for Chart.js -->
+<div id="chart-data" 
+    data-labels="{{ chart_labels|safe|escapejs }}" 
+    data-incoming="{{ chart_incoming|safe|escapejs }}" 
+    data-outgoing="{{ chart_outgoing|safe|escapejs }}"
+    data-in-stock="{{ in_stock_count }}"
+    data-low-stock="{{ low_stock_count }}"
+    data-out-of-stock="{{ out_of_stock_count }}"
+    style="display: none;">
+</div>
+
+<!-- Chart.js Script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    // Debug: Log to check if Chart.js is loaded
+    console.log('=== Chart Debug Start ===');
+    console.log('Chart.js loaded:', typeof Chart !== 'undefined');
+    console.log('Chart version:', Chart ? Chart.version : 'Not loaded');
+    console.log('Chart version:', Chart ? Chart.version : 'Not loaded');
+    
+    // Get chart data from data attributes
+    const chartDataEl = document.getElementById('chart-data');
+    
+    if (!chartDataEl) {
+        console.error('❌ chart-data element not found!');
+        return;
+    }
+    
+    console.log('✅ Chart data element found');
+    
+    // Parse chart data with robust fallback (handles Python-style lists with single quotes)
+    let chartLabels = [];
+    let chartIncoming = [];
+    let chartOutgoing = [];
+
+    const parseArray = (attrName) => {
+        const raw = chartDataEl.getAttribute(attrName);
+        if (!raw) return [];
+
+        // Normalize common encodings/escapes that break JSON.parse
+        const normalize = (s) => s
+            .trim()
+            .replace(/&quot;/g, '"')        // HTML entity to quotes
+            .replace(/&#x27;|&#39;/g, "'")   // HTML entity to single quote
+            .replace(/\\u0027/g, '"');    // \u0027 (escaped apostrophe) -> double quote
+
+        // Try proper JSON first
+        let candidate = normalize(raw);
+        try {
+            return JSON.parse(candidate);
+        } catch (err1) {
+            // Fallback: convert single quotes to double quotes and try again
+            try {
+                candidate = candidate.replace(/'/g, '"');
+                return JSON.parse(candidate);
+            } catch (err2) {
+                console.error(`❌ Failed to parse ${attrName}:`, raw, err2);
+                return [];
+            }
+        }
+    };
+
+    chartLabels = parseArray('data-labels');
+    chartIncoming = parseArray('data-incoming').map((n) => Number(n) || 0);
+    chartOutgoing = parseArray('data-outgoing').map((n) => Number(n) || 0);
+
+    console.log('📊 Chart data parsed (final):', {
+        labels: chartLabels,
+        incoming: chartIncoming,
+        outgoing: chartOutgoing
+    });
+    
+    // Get stock counts
+    const inStockCount = parseInt(chartDataEl.getAttribute('data-in-stock') || '0');
+    const lowStockCount = parseInt(chartDataEl.getAttribute('data-low-stock') || '0');
+    const outOfStockCount = parseInt(chartDataEl.getAttribute('data-out-of-stock') || '0');
+    
+    console.log('📦 Stock counts:', {
+        inStock: inStockCount,
+        lowStock: lowStockCount,
+        outOfStock: outOfStockCount,
+        total: inStockCount + lowStockCount + outOfStockCount
+    });
+    
+    // Stock Status Pie Chart
+    const ctxPie = document.getElementById('stockStatusChart');
+    if (!ctxPie) {
+        console.error('❌ stockStatusChart canvas not found!');
+    } else {
+        console.log('📊 Creating pie chart...');
+        
+        const totalItems = inStockCount + lowStockCount + outOfStockCount;
+        
+        if (totalItems > 0) {
+            try {
+                const stockStatusChart = new Chart(ctxPie, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['In Stock', 'Low Stock', 'Out of Stock'],
+                            datasets: [{
+                                data: [inStockCount, lowStockCount, outOfStockCount],
+                                backgroundColor: [
+                                    'rgba(25, 135, 84, 0.8)',    // Green
+                                    'rgba(255, 193, 7, 0.8)',    // Yellow
+                                    'rgba(220, 53, 69, 0.8)'     // Red
+                                ],
+                                borderColor: [
+                                    'rgb(25, 135, 84)',
+                                    'rgb(255, 193, 7)',
+                                    'rgb(220, 53, 69)'
+                                ],
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'bottom',
+                                    labels: {
+                                        padding: 15,
+                                        font: {
+                                            size: 12
+                                        },
+                                        usePointStyle: true
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const label = context.label || '';
+                                            const value = context.parsed || 0;
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                            return label + ': ' + value + ' items (' + percentage + '%)';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    console.log('✅ Pie chart created successfully!');
+                } catch (error) {
+                    console.error('❌ Error creating pie chart:', error);
+                }
+            } else {
+                console.warn('⚠️ No data available for pie chart');
+            }
+        }
+        
+        // Transaction Line Chart
+        const ctxLine = document.getElementById('transactionChart');
+        if (!ctxLine) {
+            console.error('❌ transactionChart canvas not found!');
+        } else {
+            console.log('📈 Creating transaction line chart...');
+            console.log('🔎 Line chart inputs:', { labelsLen: chartLabels.length, inLen: chartIncoming.length, outLen: chartOutgoing.length });
+
+            // Ensure lengths align; if not, trim to the shortest
+            const minLen = Math.min(chartLabels.length, chartIncoming.length, chartOutgoing.length);
+            const labelsUse = chartLabels.slice(-minLen);
+            const incomingUse = chartIncoming.slice(-minLen);
+            const outgoingUse = chartOutgoing.slice(-minLen);
+
+            if (labelsUse.length > 0) {
+                try {
+                    const transactionChart = new Chart(ctxLine, {
+                    type: 'line',
+                    data: {
+                        labels: labelsUse,
+                        datasets: [
+                            {
+                                label: 'Barang Masuk',
+                                data: incomingUse,
+                                borderColor: 'rgb(25, 135, 84)',
+                                backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                                tension: 0.3,
+                                fill: true,
+                                borderWidth: 2
+                            },
+                            {
+                                label: 'Barang Keluar',
+                                data: outgoingUse,
+                                borderColor: 'rgb(220, 53, 69)',
+                                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                                tension: 0.3,
+                                fill: true,
+                                borderWidth: 2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log('✅ Transaction chart created successfully!');
+                console.log('📊 Chart data points:', {
+                    labels: labelsUse.length,
+                    incoming: incomingUse.length,
+                    outgoing: outgoingUse.length
+                });
+            } catch (error) {
+                console.error('❌ Error creating transaction chart:', error);
+            }
+        } else {
+            console.warn('⚠️ No labels available for transaction chart');
+        }
+    }
+    
+    console.log('=== Chart Debug End ===');
+    }); // End DOMContentLoaded
+</script>
+{% endblock %}

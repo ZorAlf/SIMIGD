@@ -1,0 +1,261 @@
+{% extends 'inventory/base.html' %}
+{% load static %}
+
+{% block title %}Histori Aktivitas - SIMIGD{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0"><i class="bi bi-clock-history me-2"></i>Histori Aktivitas</h2>
+            <p class="text-muted mb-0">Riwayat Seluruh Transaksi Gudang</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1 text-white-50">Total Aktivitas</h6>
+                            <h3 class="mb-0">{{ total_activities }}</h3>
+                        </div>
+                        <i class="bi bi-list-check fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1 text-white-50">Barang Masuk</h6>
+                            <h3 class="mb-0">{{ incoming_count }}</h3>
+                        </div>
+                        <i class="bi bi-arrow-down-circle fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1 text-white-50">Barang Keluar</h6>
+                            <h3 class="mb-0">{{ outgoing_count }}</h3>
+                        </div>
+                        <i class="bi bi-arrow-up-circle fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1 text-dark opacity-75">Permintaan</h6>
+                            <h3 class="mb-0">{{ request_count }}</h3>
+                        </div>
+                        <i class="bi bi-clipboard-check fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Form -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" action="{% url 'direktur_histori' %}" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label"><i class="bi bi-funnel"></i> Tipe Aktivitas</label>
+                    <select class="form-select" name="type">
+                        <option value="" {% if not activity_type %}selected{% endif %}>Semua Aktivitas</option>
+                        <option value="incoming" {% if activity_type == 'incoming' %}selected{% endif %}>Barang Masuk</option>
+                        <option value="outgoing" {% if activity_type == 'outgoing' %}selected{% endif %}>Barang Keluar</option>
+                        <option value="request" {% if activity_type == 'request' %}selected{% endif %}>Permintaan Barang</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3">
+                    <label class="form-label"><i class="bi bi-search"></i> Pencarian</label>
+                    <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Cari barang">
+                </div>
+                
+                <div class="col-md-2">
+                    <label class="form-label"><i class="bi bi-calendar"></i> Dari Tanggal</label>
+                    <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+                </div>
+                
+                <div class="col-md-2">
+                    <label class="form-label"><i class="bi bi-calendar"></i> Sampai</label>
+                    <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+                </div>
+                
+                <div class="col-md-2 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">
+                        <i class="bi bi-funnel"></i> Filter
+                    </button>
+                    <a href="{% url 'direktur_histori' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Activity Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0"><i class="bi bi-table me-2"></i>Riwayat Transaksi</h5>
+        </div>
+        <div class="card-body">
+            {% if activities %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>No</th>
+                                <th>Tipe</th>
+                                <th>Tanggal</th>
+                                <th>Barang</th>
+                                <th>Jumlah</th>
+                                <th>User</th>
+                                <th>Referensi</th>
+                                <th>Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in activities %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    {% if activity.type == 'incoming' %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-arrow-down-circle"></i> Masuk
+                                        </span>
+                                    {% elif activity.type == 'outgoing' %}
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-arrow-up-circle"></i> Keluar
+                                        </span>
+                                    {% elif activity.type == 'request' %}
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="bi bi-clipboard-check"></i> Permintaan
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small>{{ activity.date|date:"d/m/Y" }}</small>
+                                </td>
+                                <td>
+                                    <strong>{{ activity.item_name }}</strong>
+                                </td>
+                                <td>
+                                    {% if activity.type == 'incoming' %}
+                                        <span class="text-success fw-bold">
+                                            <i class="bi bi-plus-circle"></i> {{ activity.quantity }}
+                                        </span>
+                                    {% elif activity.type == 'outgoing' %}
+                                        <span class="text-danger fw-bold">
+                                            <i class="bi bi-dash-circle"></i> {{ activity.quantity }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-warning fw-bold">
+                                            {{ activity.quantity }}
+                                        </span>
+                                    {% endif %}
+                                    {{ activity.unit }}
+                                </td>
+                                <td>
+                                    <small>{{ activity.user }}</small>
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ activity.reference }}</small>
+                                </td>
+                                <td>
+                                    <small>{{ activity.notes|truncatewords:8 }}</small>
+                                    {% if activity.type == 'request' %}
+                                        <br>
+                                        {% if activity.status == 'pending' %}
+                                            <span class="badge bg-warning text-dark mt-1">Pending</span>
+                                        {% elif activity.status == 'approved' %}
+                                            <span class="badge bg-success mt-1">Disetujui</span>
+                                        {% elif activity.status == 'rejected' %}
+                                            <span class="badge bg-danger mt-1">Ditolak</span>
+                                        {% elif activity.status == 'completed' %}
+                                            <span class="badge bg-info mt-1">Selesai</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1&search={{ search }}&date_from={{ date_from }}&date_to={{ date_to }}&type={{ activity_type }}">
+                                    <i class="bi bi-chevron-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search }}&date_from={{ date_from }}&date_to={{ date_to }}&type={{ activity_type }}">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}&search={{ search }}&date_from={{ date_from }}&date_to={{ date_to }}&type={{ activity_type }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search }}&date_from={{ date_from }}&date_to={{ date_to }}&type={{ activity_type }}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&search={{ search }}&date_from={{ date_from }}&date_to={{ date_to }}&type={{ activity_type }}">
+                                    <i class="bi bi-chevron-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+
+            {% else %}
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                    <p class="mb-0">Tidak ada histori aktivitas</p>
+                    {% if search or date_from or date_to or activity_type %}
+                        <a href="{% url 'direktur_histori' %}" class="btn btn-outline-secondary btn-sm mt-3">
+                            <i class="bi bi-arrow-clockwise"></i> Reset Filter
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

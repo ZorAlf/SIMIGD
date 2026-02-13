@@ -1,0 +1,382 @@
+{% extends 'inventory/base.html' %}
+{% load static %}
+
+{% block title %}Laporan Gudang - SIMIGD{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0"><i class="bi bi-file-earmark-bar-graph me-2"></i>Laporan Gudang</h2>
+            <p class="text-muted mb-0">Laporan Lengkap Inventaris Gudang Delimajaya</p>
+        </div>
+    </div>
+
+    <!-- Search & Filter Form -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" action="{% url 'direktur_laporan' %}" class="row g-3">
+                <input type="hidden" name="tab" value="{{ active_tab }}">
+                
+                <div class="col-md-4">
+                    <label class="form-label"><i class="bi bi-search"></i> Pencarian</label>
+                    <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Cari barang, supplier, dll...">
+                </div>
+                
+                <div class="col-md-3">
+                    <label class="form-label"><i class="bi bi-calendar"></i> Dari Tanggal</label>
+                    <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+                </div>
+                
+                <div class="col-md-3">
+                    <label class="form-label"><i class="bi bi-calendar"></i> Sampai Tanggal</label>
+                    <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+                </div>
+                
+                <div class="col-md-2 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">
+                        <i class="bi bi-funnel"></i> Filter
+                    </button>
+                    <a href="{% url 'direktur_laporan' %}?tab={{ active_tab }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {% if active_tab == 'stok' %}active{% endif %}" 
+               href="?tab=stok&search={{ search }}&date_from={{ date_from }}&date_to={{ date_to }}">
+                <i class="bi bi-box-seam"></i> Laporan Stok Barang
+                <span class="badge bg-secondary ms-1">{{ stok_summary.total_items }}</span>
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {% if active_tab == 'masuk' %}active{% endif %}" 
+               href="?tab=masuk&search={{ search }}&date_from={{ date_from }}&date_to={{ date_to }}">
+                <i class="bi bi-arrow-down-circle"></i> Barang Masuk
+                <span class="badge bg-success ms-1">{{ incoming_summary.total_transactions }}</span>
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {% if active_tab == 'keluar' %}active{% endif %}" 
+               href="?tab=keluar&search={{ search }}&date_from={{ date_from }}&date_to={{ date_to }}">
+                <i class="bi bi-arrow-up-circle"></i> Barang Keluar
+                <span class="badge bg-danger ms-1">{{ outgoing_summary.total_transactions }}</span>
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {% if active_tab == 'permintaan' %}active{% endif %}" 
+               href="?tab=permintaan&search={{ search }}&date_from={{ date_from }}&date_to={{ date_to }}">
+                <i class="bi bi-clipboard-check"></i> Permintaan Barang
+                <span class="badge bg-warning text-dark ms-1">{{ request_summary.total_requests }}</span>
+            </a>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+        <!-- Laporan Stok Barang -->
+        {% if active_tab == 'stok' %}
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Ringkasan Status Stok</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="border rounded p-3">
+                            <i class="bi bi-box-seam fs-1 text-primary d-block mb-2"></i>
+                            <h3 class="mb-0">{{ stok_summary.total_items }}</h3>
+                            <small class="text-muted">Total Items</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border rounded p-3 bg-success bg-opacity-10">
+                            <i class="bi bi-check-circle-fill fs-1 text-success d-block mb-2"></i>
+                            <h3 class="mb-0">{{ stok_summary.in_stock_count }}</h3>
+                            <small class="text-success fw-bold">✅ In Stock</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border rounded p-3 bg-warning bg-opacity-10">
+                            <i class="bi bi-exclamation-triangle-fill fs-1 text-warning d-block mb-2"></i>
+                            <h3 class="mb-0">{{ stok_summary.low_stock_count }}</h3>
+                            <small class="text-warning fw-bold">⚠️ Low Stock</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border rounded p-3 bg-danger bg-opacity-10">
+                            <i class="bi bi-x-circle-fill fs-1 text-danger d-block mb-2"></i>
+                            <h3 class="mb-0">{{ stok_summary.out_of_stock_count }}</h3>
+                            <small class="text-danger fw-bold">❌ Out of Stock</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Laporan Stok Barang</h5>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-primary">Total: {{ stok_summary.total_items }} items</span>
+                        <span class="badge bg-info">Stok: {{ stok_summary.total_stock }} unit</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if stok_items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>No</th>
+                                    <th>Kode Barang</th>
+                                    <th>Nama Barang</th>
+                                    <th>Kategori</th>
+                                    <th>Satuan</th>
+                                    <th class="text-center">Stok Saat Ini</th>
+                                    <th class="text-center">Stok Minimum</th>
+                                    <th class="text-center">Status Stok</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in stok_items %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td><code>{{ item.code }}</code></td>
+                                    <td><strong>{{ item.name }}</strong></td>
+                                    <td>{{ item.category.name|default:"-" }}</td>
+                                    <td>{{ item.get_unit_display }}</td>
+                                    <td class="text-center"><strong>{{ item.current_stock }}</strong></td>
+                                    <td class="text-center">{{ item.minimum_stock }}</td>
+                                    <td class="text-center">
+                                        <span class="badge {{ item.stock_status_badge }}">
+                                            <i class="bi {{ item.stock_status_icon }}"></i> {{ item.stock_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                        <p class="mb-0">Tidak ada data stok barang</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Laporan Barang Masuk -->
+        {% if active_tab == 'masuk' %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Laporan Barang Masuk</h5>
+                    <div class="d-flex gap-2 align-items-center">
+                        <span class="badge bg-success">Transaksi: {{ incoming_summary.total_transactions }}</span>
+                        <span class="badge bg-info">Total: {{ incoming_summary.total_quantity }} unit</span>
+                        <!-- Export PDF Button -->
+                        <a href="{% url 'export_pdf_barang_masuk' %}?search={{ search }}&date_from={{ date_from }}&date_to={{ date_to }}" 
+                           class="btn btn-sm btn-danger" 
+                           title="Export to PDF">
+                            <i class="bi bi-file-pdf-fill"></i> Export PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if incoming_transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>No</th>
+                                    <th>Tanggal</th>
+                                    <th>Barang</th>
+                                    <th>Jumlah</th>
+                                    <!-- <th>Supplier</th> -->
+                                    <th>User</th>
+                                    <th>Catatan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for trans in incoming_transactions %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ trans.transaction_date|date:"d/m/Y" }}</td>
+                                    <td><strong>{{ trans.item.name }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-arrow-down"></i> {{ trans.quantity }} {{ trans.item.get_unit_display }}
+                                        </span>
+                                    </td>
+                                    <!-- <td>{{ trans.supplier.supplier_name }}</td> -->
+                                    <td>{{ trans.received_by.name }}</td>
+                                    <td>{{ trans.notes|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                        <p class="mb-0">Tidak ada data barang masuk</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Laporan Barang Keluar -->
+        {% if active_tab == 'keluar' %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Laporan Barang Keluar</h5>
+                    <div class="d-flex gap-2 align-items-center">
+                        <span class="badge bg-danger">Transaksi: {{ outgoing_summary.total_transactions }}</span>
+                        <span class="badge bg-info">Total: {{ outgoing_summary.total_quantity }} unit</span>
+                        <!-- Export PDF Button -->
+                        <a href="{% url 'export_pdf_barang_keluar' %}?search={{ search }}&date_from={{ date_from }}&date_to={{ date_to }}" 
+                           class="btn btn-sm btn-danger" 
+                           title="Export to PDF">
+                            <i class="bi bi-file-pdf-fill"></i> Export PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if outgoing_transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>No</th>
+                                    <th>Tanggal</th>
+                                    <th>Barang</th>
+                                    <th>Jumlah</th>
+                                    <th>Tujuan</th>
+                                    <th>User</th>
+                                    <th>Catatan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for trans in outgoing_transactions %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ trans.transaction_date|date:"d/m/Y" }}</td>
+                                    <td><strong>{{ trans.item.name }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-arrow-up"></i> {{ trans.quantity }} {{ trans.item.get_unit_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ trans.purpose }}</td>
+                                    <td>{{ trans.released_by.name }}</td>
+                                    <td>{{ trans.notes|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                        <p class="mb-0">Tidak ada data barang keluar</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Laporan Permintaan Barang -->
+        {% if active_tab == 'permintaan' %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Laporan Permintaan Barang</h5>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-secondary">Total: {{ request_summary.total_requests }}</span>
+                        <span class="badge bg-warning text-dark">Pending: {{ request_summary.pending }}</span>
+                        <span class="badge bg-success">Approved: {{ request_summary.approved }}</span>
+                        <span class="badge bg-danger">Rejected: {{ request_summary.rejected }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if request_items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>No</th>
+                                    <th>No. Permintaan</th>
+                                    <th>Tanggal</th>
+                                    <th>Barang</th>
+                                    <th>Jumlah</th>
+                                    <th>Keperluan</th>
+                                    <th>Diminta Oleh</th>
+                                    <th>Status</th>
+                                    <th>Disetujui Oleh</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for req in request_items %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td><code>{{ req.request_number }}</code></td>
+                                    <td>{{ req.request_date|date:"d/m/Y" }}</td>
+                                    <td><strong>{{ req.item.name }}</strong></td>
+                                    <td>{{ req.quantity }} {{ req.item.get_unit_display }}</td>
+                                    <td>{{ req.purpose|truncatewords:5 }}</td>
+                                    <td>{{ req.requested_by.name }}</td>
+                                    <td>
+                                        {% if req.status == 'pending' %}
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-hourglass-split"></i> Pending
+                                            </span>
+                                        {% elif req.status == 'approved' %}
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle"></i> Disetujui
+                                            </span>
+                                        {% elif req.status == 'rejected' %}
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-x-circle"></i> Ditolak
+                                            </span>
+                                        {% elif req.status == 'completed' %}
+                                            <span class="badge bg-info">
+                                                <i class="bi bi-check-all"></i> Selesai
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ req.approved_by.name|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                        <p class="mb-0">Tidak ada data permintaan barang</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
