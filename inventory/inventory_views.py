@@ -342,7 +342,6 @@ class IncomingDetailView(GudangRequiredMixin, DetailView):
     context_object_name = 'transaction'
     pk_url_kwarg = 'incoming_id'
 
-
 class IncomingUpdateView(GudangRequiredMixin, UpdateView):
     """Update existing incoming transaction"""
     model = IncomingTransaction
@@ -357,7 +356,6 @@ class IncomingUpdateView(GudangRequiredMixin, UpdateView):
             f'Transaksi barang masuk berhasil diperbarui.'
         )
         return super().form_valid(form)
-
 class OutgoingListView(GudangRequiredMixin, ListView):
     """List all outgoing transactions"""
     model = OutgoingTransaction
