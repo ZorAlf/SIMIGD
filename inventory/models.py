@@ -150,3 +150,73 @@ class Items(models.Model):
         if self.minimum_stock == 0:
             return 100 if self.current_stock > 0 else 0
         return (self.current_stock / self.minimum_stock) * 100
+    
+class IncomingTransaction(models.Model):
+    """Model untuk transaksi barang masuk"""
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('received', 'Diterima'),
+        ('cancelled', 'Dibatalkan'),
+    ]
+
+    incoming_id = models.AutoField(primary_key=True)
+    transaction_number = models.CharField(max_length=50, unique=True, verbose_name='Nomor Transaksi')
+    item = models.ForeignKey(Items, on_delete=models.CASCADE, verbose_name='Barang')
+    supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True, verbose_name='Supplier')
+    quantity = models.IntegerField(verbose_name='Jumlah')
+    transaction_date = models.DateField(verbose_name='Tanggal Transaksi')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='received', verbose_name='Status')
+    notes = models.TextField(blank=True, null=True, verbose_name='Catatan')
+    received_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='incoming_transactions', verbose_name='Diterima Oleh')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Incoming Transaction'
+        verbose_name_plural = 'Incoming Transactions'
+        ordering = ['-transaction_date', '-created_at']
+
+    def __str__(self):
+        return f"{self.transaction_number} - {self.item.name} ({self.quantity})"
+
+    def save(self, *args, **kwargs):
+        if not self.transaction_number:
+            from datetime import datetime
+            today = datetime.now().strftime('%Y%m%d')
+            last_transaction = IncomingTransaction.objects.filter(
+                transaction_number__startswith=f'IN{today}'
+            ).order_by('-transaction_number').first()
+            
+            if last_transaction:
+                last_number = int(last_transaction.transaction_number[-4:])
+                new_number = last_number + 1
+            else:
+                new_number = 1
+            
+            self.transaction_number = f'IN{today}{str(new_number).zfill(4)}'
+        
+        is_new = self.pk is None
+        old_status = None
+        old_quantity = 0
+        
+        if not is_new:
+            old_transaction = IncomingTransaction.objects.get(pk=self.pk)
+            old_status = old_transaction.status
+            old_quantity = old_transaction.quantity
+        
+        super().save(*args, **kwargs)
+        
+        if self.status == 'received':
+            if is_new:
+                self.item.current_stock += self.quantity
+                self.item.save()
+            elif old_status != 'received':
+                self.item.current_stock += self.quantity
+                self.item.save()
+            elif old_quantity != self.quantity:
+                stock_difference = self.quantity - old_quantity
+                self.item.current_stock += stock_difference
+                self.item.save()
+        elif old_status == 'received' and self.status != 'received':
+            self.item.current_stock -= old_quantity
+            self.item.save()
