@@ -1,0 +1,36 @@
+{% extends 'inventory/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if object %}Edit Supplier{% else %}Tambah Supplier{% endif %} - SIMIGD{% endblock %}
+
+{% block page_title %}{% if object %}Edit Supplier{% else %}Tambah Supplier Baru{% endif %}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-cart-plus me-2"></i>
+                    {% if object %}Edit Supplier{% else %}Form Tambah Supplier{% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <a href="{% url 'supplier_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle me-1"></i>Batal
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-1"></i>Simpan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
