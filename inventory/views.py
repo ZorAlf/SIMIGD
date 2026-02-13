@@ -169,3 +169,227 @@ class DashboardView(View):
         except User.DoesNotExist:
             messages.error(request, 'User tidak ditemukan.')
             return redirect('user_login')
+        
+# User List View
+class UserListView(AdminRequiredMixin, ListView):
+    """Display list of all users"""
+    model = User
+    template_name = 'inventory/user_list.html'
+    context_object_name = 'users'
+    paginate_by = 10
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        search = self.request.GET.get('search')
+        role_filter = self.request.GET.get('role')
+        status_filter = self.request.GET.get('status')
+        
+        if search:
+            queryset = queryset.filter(
+                name__icontains=search
+            ) | queryset.filter(
+                username__icontains=search
+            )
+        
+        if role_filter:
+            queryset = queryset.filter(role=role_filter)
+        
+        if status_filter:
+            if status_filter == 'active':
+                queryset = queryset.filter(is_active=True)
+            elif status_filter == 'inactive':
+                queryset = queryset.filter(is_active=False)
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['role_choices'] = User.ROLE_CHOICES
+        context['search'] = self.request.GET.get('search', '')
+        context['role_filter'] = self.request.GET.get('role', '')
+        context['status_filter'] = self.request.GET.get('status', '')
+        return context
+
+
+# User Create View
+class UserCreateView(AdminRequiredMixin, CreateView):
+    """Create new user"""
+    model = User
+    form_class = UserForm
+    template_name = 'inventory/user_form.html'
+    success_url = reverse_lazy('user_list')
+    
+    def form_valid(self, form):
+        messages.success(self.request, f'User {form.instance.username} berhasil ditambahkan.')
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        messages.error(self.request, 'Terjadi kesalahan. Silakan periksa form kembali.')
+        return super().form_invalid(form)
+
+
+# User Update View
+class UserUpdateView(AdminRequiredMixin, UpdateView):
+    """Update existing user"""
+    model = User
+    form_class = UserUpdateForm
+    template_name = 'inventory/user_form.html'
+    success_url = reverse_lazy('user_list')
+    pk_url_kwarg = 'user_id'
+    
+    def form_valid(self, form):
+        messages.success(self.request, f'User {form.instance.username} berhasil diperbarui.')
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        messages.error(self.request, 'Terjadi kesalahan. Silakan periksa form kembali.')
+        return super().form_invalid(form)
+
+
+# User Delete View
+class UserDeleteView(AdminRequiredMixin, DeleteView):
+    """Delete user (soft delete by setting is_active to False)"""
+    model = User
+    template_name = 'inventory/user_confirm_delete.html'
+    success_url = reverse_lazy('user_list')
+    pk_url_kwarg = 'user_id'
+    
+    def delete(self, request, *args, **kwargs):
+        user = self.get_object()
+        
+        # Prevent admin from deleting themselves
+        current_user_id = request.session.get('user_id')
+        if user.user_id == current_user_id:
+            messages.error(request, 'Anda tidak dapat menghapus akun Anda sendiri.')
+            return redirect('user_list')
+        
+        # Soft delete: set is_active to False instead of deleting
+        user.is_active = False
+        user.save()
+        
+        messages.success(request, f'User {user.username} berhasil dinonaktifkan.')
+        return redirect(self.success_url)
+
+
+# Reset Password View
+class UserResetPasswordView(AdminRequiredMixin, View):
+    """Reset user password"""
+    template_name = 'inventory/user_reset_password.html'
+    
+    def get(self, request, user_id):
+        user = get_object_or_404(User, user_id=user_id)
+        form = ResetPasswordForm()
+        return render(request, self.template_name, {
+            'form': form,
+            'user': user
+        })
+    
+    def post(self, request, user_id):
+        user = get_object_or_404(User, user_id=user_id)
+        form = ResetPasswordForm(request.POST)
+        
+        if form.is_valid():
+            new_password = form.cleaned_data['new_password']
+            require_reset = form.cleaned_data.get('require_reset', False)
+            
+            # Set new password
+            user.set_password(new_password)
+            user.reset_password = require_reset
+            user.save()
+            
+            messages.success(request, f'Password untuk user {user.username} berhasil direset.')
+            return redirect('user_list')
+        else:
+            messages.error(request, 'Terjadi kesalahan. Silakan periksa form kembali.')
+        
+        return render(request, self.template_name, {
+            'form': form,
+            'user': user
+        })
+
+
+# User Detail View
+class UserDetailView(AdminRequiredMixin, View):
+    """View user details"""
+    template_name = 'inventory/user_detail.html'
+    
+    def get(self, request, user_id):
+        user = get_object_or_404(User, user_id=user_id)
+        return render(request, self.template_name, {'user': user})
+
+
+# Toggle User Active Status
+class UserToggleActiveView(AdminRequiredMixin, View):
+    """Toggle user active status"""
+    
+    def post(self, request, user_id):
+        user = get_object_or_404(User, user_id=user_id)
+        
+        # Prevent admin from deactivating themselves
+        current_user_id = request.session.get('user_id')
+        if user.user_id == current_user_id:
+            messages.error(request, 'Anda tidak dapat menonaktifkan akun Anda sendiri.')
+            return redirect('user_list')
+        
+        # Toggle active status
+        user.is_active = not user.is_active
+        user.save()
+        
+        status = 'diaktifkan' if user.is_active else 'dinonaktifkan'
+        messages.success(request, f'User {user.username} berhasil {status}.')
+        
+        return redirect('user_list')
+
+
+# Login View
+class UserLoginView(View):
+    """User login view"""
+    template_name = 'inventory/login.html'
+    
+    def get(self, request):
+        # If already logged in, redirect to dashboard
+        if request.session.get('user_id'):
+            return redirect('dashboard')
+        return render(request, self.template_name)
+    
+    def post(self, request):
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        if not username or not password:
+            messages.error(request, 'Username dan password harus diisi.')
+            return render(request, self.template_name)
+        
+        try:
+            user = User.objects.get(username=username, is_active=True)
+            
+            # Check password
+            if user.check_password(password):
+                # Set session
+                request.session['user_id'] = user.user_id
+                request.session['username'] = user.username
+                request.session['role'] = user.role
+                request.session['name'] = user.name
+                
+                messages.success(request, f'Selamat datang, {user.name}!')
+                
+                # Redirect to dashboard
+                return redirect('dashboard')
+            else:
+                messages.error(request, 'Username atau password salah.')
+        except User.DoesNotExist:
+            messages.error(request, 'Username atau password salah.')
+        
+        return render(request, self.template_name)
+
+
+# Logout View
+class UserLogoutView(View):
+    """User logout view"""
+    
+    def get(self, request):
+        # Clear session
+        request.session.flush()
+        messages.success(request, 'Anda telah berhasil logout.')
+        return redirect('user_login')
+
