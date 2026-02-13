@@ -1,0 +1,198 @@
+{% extends 'inventory/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Buat Permintaan Barang - SIMIGD{% endblock %}
+
+{% block page_title %}Buat Permintaan Barang Baru{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Form Column -->
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-clipboard-plus me-2"></i>
+                    Form Permintaan Barang
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate id="requestForm">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Informasi:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Sistem akan otomatis memeriksa ketersediaan stok</li>
+                            <li>Jika stok tidak mencukupi, permintaan akan menunggu persetujuan admin/gudang</li>
+                            <li>Tanggal dibutuhkan tidak boleh lebih awal dari tanggal permintaan</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <a href="{% url 'request_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle me-1"></i>Batal
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send me-1"></i>Kirim Permintaan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stock Info Column -->
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Informasi Stok Barang
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="stockInfo">
+                    <p class="text-muted">Pilih barang untuk melihat informasi stok</p>
+                </div>
+                
+                <hr>
+                
+                <h6>Daftar Barang Tersedia:</h6>
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>Nama Barang</th>
+                                <th>Stok</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items_with_stock %}
+                            <tr class="item-row" data-item-id="{{ item.items_id }}" 
+                                data-item-name="{{ item.name }}"
+                                data-item-stock="{{ item.current_stock }}"
+                                data-item-unit="{{ item.get_unit_display }}"
+                                data-item-min="{{ item.minimum_stock }}">
+                                <td>
+                                    <strong>{{ item.name }}</strong>
+                                    {% if item.category %}
+                                    <br><small class="text-muted">{{ item.category.name }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ item.current_stock }} {{ item.get_unit_display }}
+                                </td>
+                                <td>
+                                    {% if item.stock_status == 'out_of_stock' %}
+                                        <span class="badge bg-danger">Habis</span>
+                                    {% elif item.stock_status == 'low_stock' %}
+                                        <span class="badge bg-warning">Menipis</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Normal</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const itemSelect = document.querySelector('select[name="item"]');
+    const quantityInput = document.querySelector('input[name="quantity"]');
+    const stockInfoDiv = document.getElementById('stockInfo');
+    
+    // Function to update stock info
+    function updateStockInfo() {
+        const selectedOption = itemSelect.options[itemSelect.selectedIndex];
+        if (!selectedOption.value) {
+            stockInfoDiv.innerHTML = '<p class="text-muted">Pilih barang untuk melihat informasi stok</p>';
+            return;
+        }
+        
+        // Find item data from table
+        const itemRow = document.querySelector(`.item-row[data-item-id="${selectedOption.value}"]`);
+        if (!itemRow) return;
+        
+        const itemName = itemRow.dataset.itemName;
+        const itemStock = parseInt(itemRow.dataset.itemStock);
+        const itemUnit = itemRow.dataset.itemUnit;
+        const itemMin = parseInt(itemRow.dataset.itemMin);
+        const requestedQty = parseInt(quantityInput.value) || 0;
+        
+        let statusBadge = '';
+        let statusMessage = '';
+        
+        if (itemStock === 0) {
+            statusBadge = '<span class="badge bg-danger">Stok Habis</span>';
+            statusMessage = '<div class="alert alert-danger mt-2">Stok saat ini habis. Permintaan akan menunggu persetujuan admin.</div>';
+        } else if (itemStock < requestedQty) {
+            statusBadge = '<span class="badge bg-warning">Stok Tidak Cukup</span>';
+            statusMessage = `<div class="alert alert-warning mt-2">Stok tidak mencukupi (kurang ${requestedQty - itemStock} ${itemUnit}). Permintaan akan menunggu persetujuan admin.</div>`;
+        } else if (requestedQty > 0) {
+            statusBadge = '<span class="badge bg-success">Stok Tersedia</span>';
+            statusMessage = '<div class="alert alert-success mt-2">Stok tersedia untuk permintaan Anda.</div>';
+        } else {
+            statusBadge = '<span class="badge bg-info">Masukkan Jumlah</span>';
+        }
+        
+        stockInfoDiv.innerHTML = `
+            <h6>${itemName} ${statusBadge}</h6>
+            <table class="table table-sm">
+                <tr>
+                    <td><strong>Stok Saat Ini:</strong></td>
+                    <td>${itemStock} ${itemUnit}</td>
+                </tr>
+                <tr>
+                    <td><strong>Stok Minimum:</strong></td>
+                    <td>${itemMin} ${itemUnit}</td>
+                </tr>
+                ${requestedQty > 0 ? `
+                <tr>
+                    <td><strong>Diminta:</strong></td>
+                    <td>${requestedQty} ${itemUnit}</td>
+                </tr>
+                <tr class="${itemStock >= requestedQty ? 'table-success' : 'table-warning'}">
+                    <td><strong>Sisa Stok:</strong></td>
+                    <td>${Math.max(0, itemStock - requestedQty)} ${itemUnit}</td>
+                </tr>
+                ` : ''}
+            </table>
+            ${statusMessage}
+        `;
+    }
+    
+    // Event listeners
+    if (itemSelect) {
+        itemSelect.addEventListener('change', updateStockInfo);
+    }
+    
+    if (quantityInput) {
+        quantityInput.addEventListener('input', updateStockInfo);
+    }
+    
+    // Make table rows clickable
+    document.querySelectorAll('.item-row').forEach(row => {
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', function() {
+            const itemId = this.dataset.itemId;
+            itemSelect.value = itemId;
+            itemSelect.dispatchEvent(new Event('change'));
+            // Scroll to form
+            document.getElementById('requestForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+});
+</script>
+{% endblock %}

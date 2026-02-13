@@ -1,0 +1,181 @@
+{% extends 'inventory/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Approve Permintaan - SIMIGD{% endblock %}
+
+{% block page_title %}Proses Persetujuan Permintaan{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Request Summary -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-clipboard-data me-2"></i>
+                    Ringkasan Permintaan #{{ object.request_number }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td width="45%"><strong>Barang:</strong></td>
+                                <td>{{ object.item.name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Jumlah Diminta:</strong></td>
+                                <td><span class="badge bg-primary fs-6">{{ object.quantity }} {{ object.item.get_unit_display }}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Keperluan:</strong></td>
+                                <td>{{ object.purpose }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td width="45%"><strong>Diminta Oleh:</strong></td>
+                                <td>{{ object.requested_by.name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Tanggal Permintaan:</strong></td>
+                                <td>{{ object.request_date|date:"d F Y" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Dibutuhkan Tanggal:</strong></td>
+                                <td>{{ object.needed_date|date:"d F Y" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if object.notes %}
+                <div class="alert alert-info mb-0 mt-2">
+                    <strong><i class="bi bi-sticky me-2"></i>Catatan:</strong> {{ object.notes }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Stock Check -->
+        <div class="card mb-4">
+            <div class="card-header {% if stock_info.available %}bg-success{% else %}bg-warning{% endif %} text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-box-seam me-2"></i>
+                    Pemeriksaan Stok
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded">
+                            <h6 class="text-muted">Stok Saat Ini</h6>
+                            <h3 class="{% if stock_info.available %}text-success{% else %}text-warning{% endif %}">
+                                {{ stock_info.current }}
+                            </h3>
+                            <small class="text-muted">{{ stock_info.unit }}</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded">
+                            <h6 class="text-muted">Diminta</h6>
+                            <h3 class="text-primary">{{ stock_info.requested }}</h3>
+                            <small class="text-muted">{{ stock_info.unit }}</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded">
+                            <h6 class="text-muted">{% if stock_info.available %}Sisa{% else %}Kekurangan{% endif %}</h6>
+                            <h3 class="{% if stock_info.available %}text-success{% else %}text-danger{% endif %}">
+                                {% if stock_info.available %}
+                                    {{ stock_info.current|add:"-"|add:stock_info.requested }}
+                                {% else %}
+                                    {{ stock_info.deficit }}
+                                {% endif %}
+                            </h3>
+                            <small class="text-muted">{{ stock_info.unit }}</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert {% if stock_info.available %}alert-success{% else %}alert-warning{% endif %} mt-3 mb-0">
+                    <div class="d-flex align-items-center">
+                        <i class="bi {% if stock_info.available %}bi-check-circle{% else %}bi-exclamation-triangle{% endif %} me-2" style="font-size: 2rem;"></i>
+                        <div>
+                            {% if stock_info.available %}
+                                <strong>Stok Tersedia!</strong><br>
+                                <small>Permintaan dapat disetujui karena stok mencukupi.</small>
+                            {% else %}
+                                <strong>Stok Tidak Mencukupi!</strong><br>
+                                <small>Kekurangan {{ stock_info.deficit }} {{ stock_info.unit }}. Pertimbangkan untuk menolak atau menunggu stok masuk.</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Approval Form -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-check-square me-2"></i>
+                    Keputusan Persetujuan
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Catatan Penting:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Jika <strong>Disetujui</strong>, permintaan akan diproses dan stok akan dikurangi</li>
+                            <li>Jika <strong>Ditolak</strong>, wajib mengisi alasan penolakan</li>
+                            <li>Keputusan ini akan langsung dikirim ke pemohon</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <a href="{% url 'request_detail' object.request_id %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle me-1"></i>Batal
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-send me-1"></i>Kirim Keputusan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const statusSelect = document.querySelector('select[name="status"]');
+    const rejectionReasonField = document.querySelector('textarea[name="rejection_reason"]').closest('.form-group');
+    
+    function toggleRejectionReason() {
+        if (statusSelect.value === 'rejected') {
+            rejectionReasonField.style.display = 'block';
+            document.querySelector('textarea[name="rejection_reason"]').required = true;
+        } else {
+            rejectionReasonField.style.display = 'none';
+            document.querySelector('textarea[name="rejection_reason"]').required = false;
+        }
+    }
+    
+    if (statusSelect) {
+        statusSelect.addEventListener('change', toggleRejectionReason);
+        toggleRejectionReason(); // Initial check
+    }
+});
+</script>
+{% endblock %}

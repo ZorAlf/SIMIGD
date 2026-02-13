@@ -1,0 +1,232 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Daftar Permintaan Barang - SIMIGD{% endblock %}
+
+{% block page_title %}Permintaan Barang{% endblock %}
+
+{% block content %}
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Pending</h6>
+                        <h3>{{ pending_count }}</h3>
+                    </div>
+                    <i class="bi bi-clock-history" style="font-size: 2.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Disetujui</h6>
+                        <h3>{{ approved_count }}</h3>
+                    </div>
+                    <i class="bi bi-check-circle" style="font-size: 2.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Ditolak</h6>
+                        <h3>{{ rejected_count }}</h3>
+                    </div>
+                    <i class="bi bi-x-circle" style="font-size: 2.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Total</h6>
+                        <h3>{{ page_obj.paginator.count|default:0 }}</h3>
+                    </div>
+                    <i class="bi bi-clipboard-data" style="font-size: 2.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-clipboard-check me-2"></i>Daftar Permintaan Barang</h5>
+        {% if is_produksi %}
+        <a href="{% url 'request_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Buat Permintaan Baru
+        </a>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <!-- Search and Filter Form -->
+        <form method="get" class="row g-3 mb-3">
+            <div class="col-md-4">
+                <input type="text" class="form-control" name="search" placeholder="Cari nomor, barang, keperluan..." value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select">
+                    <option value="">Semua Status</option>
+                    <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="approved" {% if request.GET.status == 'approved' %}selected{% endif %}>Disetujui</option>
+                    <option value="rejected" {% if request.GET.status == 'rejected' %}selected{% endif %}>Ditolak</option>
+                    <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Selesai</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="date" class="form-control" name="date_from" placeholder="Dari Tanggal" value="{{ request.GET.date_from }}">
+            </div>
+            <div class="col-md-2">
+                <input type="date" class="form-control" name="date_to" placeholder="Sampai Tanggal" value="{{ request.GET.date_to }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-secondary w-100">
+                    <i class="bi bi-search me-1"></i>Filter
+                </button>
+            </div>
+        </form>
+
+        <!-- Requests Table -->
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>No. Permintaan</th>
+                        <th>Tanggal</th>
+                        <th>Barang</th>
+                        <th>Jumlah</th>
+                        <th>Keperluan</th>
+                        <th>Status</th>
+                        {% if is_admin_or_gudang %}
+                        <th>Diminta Oleh</th>
+                        {% endif %}
+                        <th>Stok</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in requests %}
+                    <tr>
+                        <td><strong>{{ req.request_number }}</strong></td>
+                        <td>{{ req.request_date|date:"d/m/Y" }}</td>
+                        <td>{{ req.item.name }}</td>
+                        <td>{{ req.quantity }} {{ req.item.get_unit_display }}</td>
+                        <td>{{ req.purpose|truncatewords:5 }}</td>
+                        <td>
+                            {% if req.status == 'pending' %}
+                                <span class="badge bg-warning">
+                                    <i class="bi bi-clock me-1"></i>Pending
+                                </span>
+                            {% elif req.status == 'approved' %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle me-1"></i>Disetujui
+                                </span>
+                            {% elif req.status == 'rejected' %}
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-x-circle me-1"></i>Ditolak
+                                </span>
+                            {% elif req.status == 'completed' %}
+                                <span class="badge bg-info">
+                                    <i class="bi bi-check-all me-1"></i>Selesai
+                                </span>
+                            {% endif %}
+                        </td>
+                        {% if is_admin_or_gudang %}
+                        <td>{{ req.requested_by.name }}</td>
+                        {% endif %}
+                        <td>
+                            {% if req.item.current_stock >= req.quantity %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle me-1"></i>Tersedia
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>Kurang
+                                </span>
+                            {% endif %}
+                            <br>
+                            <small class="text-muted">{{ req.item.current_stock }} {{ req.item.get_unit_display }}</small>
+                        </td>
+                        <td>
+                            <div class="action-buttons d-flex gap-2">
+                                <a href="{% url 'request_detail' req.request_id %}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Detail">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if is_admin_or_gudang and req.status == 'pending' %}
+                                <a href="{% url 'request_approve' req.request_id %}" class="btn btn-sm btn-success" data-bs-toggle="tooltip" title="Approve/Reject">
+                                    <i class="bi bi-check-square"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="{% if is_admin_or_gudang %}9{% else %}8{% endif %}" class="text-center">
+                            Tidak ada data permintaan barang.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">First</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">Previous</a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">Next</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">Last</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .action-buttons {
+        white-space: nowrap;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+{% endblock %}
