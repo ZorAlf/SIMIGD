@@ -1,0 +1,60 @@
+{% extends 'inventory/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if object %}Edit Barang Keluar{% else %}Tambah Barang Keluar{% endif %} - SIMIGD{% endblock %}
+
+{% block page_title %}{% if object %}Edit Barang Keluar{% else %}Tambah Barang Keluar{% endif %}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-arrow-up-circle me-2"></i>
+                    {% if object %}Edit Transaksi Barang Keluar{% else %}Form Tambah Barang Keluar{% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    
+                    <div class="alert alert-warning mt-3">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Perhatian:</strong> Pastikan stok barang mencukupi. Stok akan otomatis berkurang setelah transaksi disimpan dengan status "Dikeluarkan".
+                    </div>
+                    
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <a href="{% url 'outgoing_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle me-1"></i>Batal
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-1"></i>Simpan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Optional: Add dynamic stock checking via AJAX
+    document.addEventListener('DOMContentLoaded', function() {
+        const itemSelect = document.querySelector('select[name="item"]');
+        const quantityInput = document.querySelector('input[name="quantity"]');
+        
+        if (itemSelect && quantityInput) {
+            // You can add AJAX to check current stock when item is selected
+            itemSelect.addEventListener('change', function() {
+                // Future enhancement: fetch and display current stock
+                console.log('Item selected:', this.value);
+            });
+        }
+    });
+</script>
+{% endblock %}
