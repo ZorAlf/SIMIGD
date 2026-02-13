@@ -422,3 +422,106 @@ class OutgoingTransactionForm(forms.ModelForm):
         
         return cleaned_data
 
+class RequestItemForm(forms.ModelForm):
+    """Form untuk permintaan barang dari pegawai produksi"""
+    
+    class Meta:
+        model = RequestItems
+        fields = ['item', 'quantity', 'request_date', 'needed_date', 'purpose', 'notes']
+        widgets = {
+            'request_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'needed_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'purpose': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: Produksi Batch #123'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Catatan tambahan (opsional)'}),
+        }
+        labels = {
+            'item': 'Pilih Barang',
+            'quantity': 'Jumlah',
+            'request_date': 'Tanggal Permintaan',
+            'needed_date': 'Tanggal Dibutuhkan',
+            'purpose': 'Keperluan',
+            'notes': 'Catatan',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            Row(
+                Column('item', css_class='form-group col-md-6 mb-0'),
+                Column('quantity', css_class='form-group col-md-6 mb-0'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('request_date', css_class='form-group col-md-6 mb-0'),
+                Column('needed_date', css_class='form-group col-md-6 mb-0'),
+                css_class='form-row'
+            ),
+            Field('purpose', css_class='mb-3'),
+            Field('notes', css_class='mb-3'),
+        )
+        
+        # Filter only active items
+        self.fields['item'].queryset = Items.objects.filter(is_active=True)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        item = cleaned_data.get('item')
+        quantity = cleaned_data.get('quantity')
+        request_date = cleaned_data.get('request_date')
+        needed_date = cleaned_data.get('needed_date')
+        
+        # Check if item has enough stock (warning only)
+        if item and quantity:
+            if item.current_stock < quantity:
+                self.add_error('quantity', 
+                    f'Perhatian: Stok saat ini hanya {item.current_stock} {item.get_unit_display()}. '
+                    f'Permintaan Anda akan menunggu approval dari admin/gudang.'
+                )
+        
+        # Validate dates
+        if request_date and needed_date:
+            if needed_date < request_date:
+                raise forms.ValidationError('Tanggal dibutuhkan tidak boleh lebih awal dari tanggal permintaan!')
+        
+        return cleaned_data
+
+
+class ApproveRequestForm(forms.ModelForm):
+    """Form untuk approve/reject permintaan barang (untuk Admin/Gudang)"""
+    
+    class Meta:
+        model = RequestItems
+        fields = ['status', 'rejection_reason']
+        widgets = {
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'rejection_reason': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Alasan penolakan (wajib diisi jika ditolak)'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            Field('status', css_class='mb-3'),
+            Field('rejection_reason', css_class='mb-3'),
+        )
+        
+        # Limit status choices to approved/rejected only
+        self.fields['status'].choices = [
+            ('pending', 'Pending'),
+            ('approved', 'Disetujui'),
+            ('rejected', 'Ditolak'),
+        ]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        status = cleaned_data.get('status')
+        rejection_reason = cleaned_data.get('rejection_reason')
+        
+        # Require rejection reason if status is rejected
+        if status == 'rejected' and not rejection_reason:
+            raise forms.ValidationError('Alasan penolakan wajib diisi jika permintaan ditolak!')
+        
+        return cleaned_data
