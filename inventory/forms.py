@@ -329,3 +329,96 @@ class ItemForm(forms.ModelForm):
                 HTML('<a href="{% url \'item_list\' %}" class="btn btn-secondary">Batal</a>'),
             )
         )
+
+class IncomingTransactionForm(forms.ModelForm):
+    """Form untuk transaksi barang masuk"""
+    
+    transaction_date = forms.DateField(
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        label='Tanggal Transaksi'
+    )
+    
+    class Meta:
+        model = IncomingTransaction
+        fields = ['item', 'supplier', 'quantity', 'transaction_date', 'status', 'notes']
+        widgets = {
+            'item': forms.Select(attrs={'class': 'form-control'}),
+            'supplier': forms.Select(attrs={'class': 'form-control'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Jumlah', 'min': '1'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Catatan (opsional)'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            Row(
+                Column(Field('item', css_class='mb-3'), css_class='col-md-6'),
+                Column(Field('supplier', css_class='mb-3'), css_class='col-md-6'),
+            ),
+            Row(
+                Column(Field('quantity', css_class='mb-3'), css_class='col-md-4'),
+                Column(Field('transaction_date', css_class='mb-3'), css_class='col-md-4'),
+                Column(Field('status', css_class='mb-3'), css_class='col-md-4'),
+            ),
+            Field('notes', css_class='mb-3'),
+            FormActions(
+                Submit('submit', 'Simpan', css_class='btn btn-primary'),
+                HTML('<a href="{% url \'incoming_list\' %}" class="btn btn-secondary">Batal</a>'),
+            )
+        )
+
+class OutgoingTransactionForm(forms.ModelForm):
+    """Form untuk transaksi barang keluar"""
+    
+    transaction_date = forms.DateField(
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        label='Tanggal Transaksi'
+    )
+    class Meta:
+        model = OutgoingTransaction
+        fields = ['item', 'quantity', 'transaction_date', 'purpose', 'status', 'notes']
+        widgets = {
+            'item': forms.Select(attrs={'class': 'form-control'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Jumlah', 'min': '1'}),
+            'purpose': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tujuan/Keperluan'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Catatan (opsional)'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            Field('item', css_class='mb-3'),
+            Row(
+                Column(Field('quantity', css_class='mb-3'), css_class='col-md-4'),
+                Column(Field('transaction_date', css_class='mb-3'), css_class='col-md-4'),
+                Column(Field('status', css_class='mb-3'), css_class='col-md-4'),
+            ),
+            Field('purpose', css_class='mb-3'),
+            Field('notes', css_class='mb-3'),
+            FormActions(
+                Submit('submit', 'Simpan', css_class='btn btn-primary'),
+                HTML('<a href="{% url \'outgoing_list\' %}" class="btn btn-secondary">Batal</a>'),
+            )
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        item = cleaned_data.get('item')
+        quantity = cleaned_data.get('quantity')
+        status = cleaned_data.get('status')
+        
+        # Validate stock if status is released
+        if item and quantity and status == 'released':
+            if item.current_stock < quantity:
+                raise forms.ValidationError(
+                    f'Stok tidak mencukupi! Stok saat ini: {item.current_stock} {item.unit}'
+                )
+        
+        return cleaned_data
+
