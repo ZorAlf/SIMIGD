@@ -1,0 +1,88 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Detail User - SIMIGD{% endblock %}
+
+{% block page_title %}Detail User{% endblock %}
+
+{% block content %}
+<!-- Center the content -->
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+        <!-- User Information Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-person-badge me-2"></i>
+                    Informasi User
+                </h5>
+            </div>
+            
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th width="35%">ID User</th>
+                        <td>{{ user.user_id }}</td>
+                    </tr>
+                    <tr>
+                        <th>Nama Lengkap</th>
+                        <td>{{ user.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Username</th>
+                        <td>{{ user.username }}</td>
+                    </tr>
+                    <tr>
+                        <th>Role</th>
+                        <td>
+                            <span class="badge 
+                                {% if user.role == 'admin' %}bg-danger
+                                {% elif user.role == 'pegawai_gudang' %}bg-primary
+                                {% elif user.role == 'pegawai_produksi' %}bg-info
+                                {% elif user.role == 'direktur' %}bg-warning
+                                {% endif %}">
+                                {{ user.get_role_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Status</th>
+                        <td>
+                            {% if user.is_active %}
+                                <span class="badge bg-success">Aktif</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Tidak Aktif</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Reset Password Required</th>
+                        <td>
+                            {% if user.reset_password %}
+                                <span class="badge bg-warning text-dark">Tidak</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Tidak</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Dibuat Pada</th>
+                        <td>{{ user.created_at|date:"d F Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Terakhir Diupdate</th>
+                        <td>{{ user.updated_at|date:"d F Y H:i" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="text-center">
+            <a href="{% url 'user_list' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i>
+                Kembali ke Daftar
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

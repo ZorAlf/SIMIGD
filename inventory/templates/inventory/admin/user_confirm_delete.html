@@ -1,0 +1,73 @@
+{% extends 'inventory/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Konfirmasi Hapus User - SIMIGD{% endblock %}
+
+{% block page_title %}Konfirmasi Hapus User{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Konfirmasi Penghapusan
+                </h5>
+            </div>
+            
+            <div class="card-body">
+                <div class="alert alert-warning" role="alert">
+                    <i class="bi bi-exclamation-circle me-2"></i>
+                    <strong>Perhatian!</strong> User akan dinonaktifkan dari sistem.
+                </div>
+                
+                <p class="mb-3">Apakah Anda yakin ingin menghapus user berikut?</p>
+                
+                <table class="table table-bordered">
+                    <tr>
+                        <th width="30%">ID</th>
+                        <td>{{ object.user_id }}</td>
+                    </tr>
+                    <tr>
+                        <th>Nama</th>
+                        <td>{{ object.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Username</th>
+                        <td>{{ object.username }}</td>
+                    </tr>
+                    <tr>
+                        <th>Role</th>
+                        <td>{{ object.get_role_display }}</td>
+                    </tr>
+                    <tr>
+                        <th>Status</th>
+                        <td>
+                            {% if object.is_active %}
+                                <span class="badge bg-success">Aktif</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Tidak Aktif</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+                
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'user_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle me-1"></i>
+                            Batal
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-1"></i>
+                            Ya, Hapus User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
